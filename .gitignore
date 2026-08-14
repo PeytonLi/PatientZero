@@ -1,0 +1,7 @@
+hydradb-data/
+data/
+__pycache__/
+*.pyc
+.venv/
+runs/
+.env
