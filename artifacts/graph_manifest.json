@@ -1,0 +1,32 @@
+{
+  "elements": 40863,
+  "generated_by": "python scripts/etl.py",
+  "honesty": [
+    "Headline is 40,863 elements, not a million-node npm slice. Reverse dependents are not available from deps.dev REST (counts only), so Leg 1 uses real lockfile PINS plus forward DEPENDS_ON.",
+    "Compromised IOC versions are unpublished; deps.dev returned 404 for those version graphs. DEPENDS_ON is the current default version of each IOC package (142 graphs, 38 packages still missing). Do not treat those edges as the May 11 19:20 resolved tree.",
+    "24 Service nodes are real OSS package-lock.json files observed at fetch time. lockfile_at is the download epoch, not a May 11 snapshot.",
+    "Parquet lives in gitignored data/graph/. Re-run: python scripts/etl.py --offline (after caches exist) or python scripts/etl.py (fetch missing)."
+  ],
+  "depsdev": {
+    "ioc_packages": 180,
+    "graphs": 142,
+    "skipped_404": 38,
+    "fallback_default": 142
+  },
+  "files": {
+    "packages.parquet": {"rows": 5919},
+    "versions.parquet": {"rows": 8775},
+    "maintainers.parquet": {"rows": 72},
+    "repos.parquet": {"rows": 30},
+    "workflows.parquet": {"rows": 88},
+    "services.parquet": {"rows": 24},
+    "advisories.parquet": {"rows": 1},
+    "edges_depends_on.parquet": {"rows": 4025},
+    "edges_pins.parquet": {"rows": 17478},
+    "edges_maintains.parquet": {"rows": 4023},
+    "edges_published_from.parquet": {"rows": 150},
+    "edges_has_workflow.parquet": {"rows": 88},
+    "edges_publishes_via_oidc.parquet": {"rows": 106},
+    "edges_affects.parquet": {"rows": 84}
+  }
+}

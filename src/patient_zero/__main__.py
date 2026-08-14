@@ -1,4 +1,4 @@
-"""python -m patient_zero — serve the stub API on :8080."""
+"""python -m patient_zero — serve the API on :8080."""
 
 from patient_zero.server import main
 

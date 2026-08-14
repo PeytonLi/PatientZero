@@ -1,0 +1,146 @@
+[
+  {
+    "sid": "svc:axios",
+    "name": "axios",
+    "source_repo": "github:axios/axios",
+    "url": "https://raw.githubusercontent.com/axios/axios/v1.x/package-lock.json"
+  },
+  {
+    "sid": "svc:socket-io",
+    "name": "socket-io",
+    "source_repo": "github:socketio/socket.io",
+    "url": "https://raw.githubusercontent.com/socketio/socket.io/main/package-lock.json"
+  },
+  {
+    "sid": "svc:jquery",
+    "name": "jquery",
+    "source_repo": "github:jquery/jquery",
+    "url": "https://raw.githubusercontent.com/jquery/jquery/main/package-lock.json"
+  },
+  {
+    "sid": "svc:yargs",
+    "name": "yargs",
+    "source_repo": "github:yargs/yargs",
+    "url": "https://raw.githubusercontent.com/yargs/yargs/main/package-lock.json"
+  },
+  {
+    "sid": "svc:mocha",
+    "name": "mocha",
+    "source_repo": "github:mochajs/mocha",
+    "url": "https://raw.githubusercontent.com/mochajs/mocha/main/package-lock.json"
+  },
+  {
+    "sid": "svc:chai",
+    "name": "chai",
+    "source_repo": "github:chaijs/chai",
+    "url": "https://raw.githubusercontent.com/chaijs/chai/main/package-lock.json"
+  },
+  {
+    "sid": "svc:moment",
+    "name": "moment",
+    "source_repo": "github:moment/moment",
+    "url": "https://raw.githubusercontent.com/moment/moment/develop/package-lock.json"
+  },
+  {
+    "sid": "svc:winston",
+    "name": "winston",
+    "source_repo": "github:winstonjs/winston",
+    "url": "https://raw.githubusercontent.com/winstonjs/winston/master/package-lock.json"
+  },
+  {
+    "sid": "svc:cheerio",
+    "name": "cheerio",
+    "source_repo": "github:cheeriojs/cheerio",
+    "url": "https://raw.githubusercontent.com/cheeriojs/cheerio/main/package-lock.json"
+  },
+  {
+    "sid": "svc:jsdom",
+    "name": "jsdom",
+    "source_repo": "github:jsdom/jsdom",
+    "url": "https://raw.githubusercontent.com/jsdom/jsdom/main/package-lock.json"
+  },
+  {
+    "sid": "svc:marked",
+    "name": "marked",
+    "source_repo": "github:markedjs/marked",
+    "url": "https://raw.githubusercontent.com/markedjs/marked/master/package-lock.json"
+  },
+  {
+    "sid": "svc:nodemailer",
+    "name": "nodemailer",
+    "source_repo": "github:nodemailer/nodemailer",
+    "url": "https://raw.githubusercontent.com/nodemailer/nodemailer/master/package-lock.json"
+  },
+  {
+    "sid": "svc:node-redis",
+    "name": "node-redis",
+    "source_repo": "github:redis/node-redis",
+    "url": "https://raw.githubusercontent.com/redis/node-redis/master/package-lock.json"
+  },
+  {
+    "sid": "svc:mongodb",
+    "name": "mongodb",
+    "source_repo": "github:mongodb/node-mongodb-native",
+    "url": "https://raw.githubusercontent.com/mongodb/node-mongodb-native/main/package-lock.json"
+  },
+  {
+    "sid": "svc:mqtt",
+    "name": "mqtt",
+    "source_repo": "github:mqttjs/MQTT.js",
+    "url": "https://raw.githubusercontent.com/mqttjs/MQTT.js/main/package-lock.json"
+  },
+  {
+    "sid": "svc:ava",
+    "name": "ava",
+    "source_repo": "github:avajs/ava",
+    "url": "https://raw.githubusercontent.com/avajs/ava/main/package-lock.json"
+  },
+  {
+    "sid": "svc:semantic-release",
+    "name": "semantic-release",
+    "source_repo": "github:semantic-release/semantic-release",
+    "url": "https://raw.githubusercontent.com/semantic-release/semantic-release/master/package-lock.json"
+  },
+  {
+    "sid": "svc:lerna",
+    "name": "lerna",
+    "source_repo": "github:lerna/lerna",
+    "url": "https://raw.githubusercontent.com/lerna/lerna/main/package-lock.json"
+  },
+  {
+    "sid": "svc:hexo",
+    "name": "hexo",
+    "source_repo": "github:hexojs/hexo",
+    "url": "https://raw.githubusercontent.com/hexojs/hexo/master/package-lock.json"
+  },
+  {
+    "sid": "svc:immutable",
+    "name": "immutable",
+    "source_repo": "github:immutable-js/immutable-js",
+    "url": "https://raw.githubusercontent.com/immutable-js/immutable-js/main/package-lock.json"
+  },
+  {
+    "sid": "svc:commander",
+    "name": "commander",
+    "source_repo": "github:tj/commander.js",
+    "url": "https://raw.githubusercontent.com/tj/commander.js/master/package-lock.json"
+  },
+  {
+    "sid": "svc:helmet",
+    "name": "helmet",
+    "source_repo": "github:helmetjs/helmet",
+    "url": "https://raw.githubusercontent.com/helmetjs/helmet/main/package-lock.json"
+  },
+  {
+    "sid": "svc:mattermost",
+    "name": "mattermost",
+    "source_repo": "github:mattermost/mattermost",
+    "url": "https://raw.githubusercontent.com/mattermost/mattermost/master/webapp/package-lock.json"
+  },
+  {
+    "sid": "svc:appwrite",
+    "name": "appwrite",
+    "source_repo": "github:appwrite/appwrite",
+    "url": "https://raw.githubusercontent.com/appwrite/appwrite/main/package-lock.json"
+  }
+]

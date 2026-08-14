@@ -597,6 +597,18 @@
       }, 71);
     }
 
+    if (p === "/api/meta") {
+      return envelope("// catalog lookup, not a traversal", {
+        default_blast: {
+          ecosystem: "npm",
+          name: "@tanstack/react-query",
+          version: "5.101.4"
+        },
+        default_sid: "svc:mattermost",
+        seed_pids: SEED_PACKAGES.map(function (s) { return s.pid; })
+      }, 8);
+    }
+
     return envelope("", { error: "unknown mock path", path: p, stub: true }, 99);
   }
 

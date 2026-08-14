@@ -43,6 +43,16 @@ def _uri() -> str:
     return os.environ.get("HYDRADB_BOLT_URI", DEFAULT_BOLT_URI)
 
 
+def bolt_driver(*, timeout: float = 10.0):
+    """Bolt driver. Caller owns close(). Writes go through scripts/load.py only."""
+    return GraphDatabase.driver(
+        _uri(),
+        auth=basic_auth("neo4j", _token()),
+        connection_timeout=timeout,
+        connection_acquisition_timeout=timeout,
+    )
+
+
 def ping(uri: str | None = None) -> bool:
     """True iff Bolt answers. Never raises, never writes.
 

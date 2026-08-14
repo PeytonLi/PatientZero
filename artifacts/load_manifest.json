@@ -1,0 +1,16 @@
+{
+  "status": "loaded",
+  "nodes": 14910,
+  "edges": 25954,
+  "elements": 40864,
+  "batch_size": 1000,
+  "writer": "single-threaded scripts/load.py",
+  "checkpoint": "runs/load-checkpoint.json",
+  "hydra_id": "blake2b-64 truncated to 63 bits; HydraDB 0.1.0 UNWIND id/eid must be non-negative integers, not vid/pid strings",
+  "notes": [
+    "D0-1 probe nodes with integer offsets remain in this database. Real graph ids are 63-bit hashes and do not collide with those offsets.",
+    "First pass wrote all node labels plus DEPENDS_ON/PINS/AFFECTS/MAINTAINS/PUBLISHED_FROM in ~52s, then MATCH-failed on HAS_WORKFLOW because github:mistralai/client-python had workflows but no Repo row. Resume MERGEd that Repo and finished HAS_WORKFLOW + PUBLISHES_VIA_OIDC.",
+    "Do not treat the 2.6s resume wall-clock as throughput. Combined load was about a minute for 40,864 elements.",
+    "algo.SSpaths sourceProperty is id (the integer hash). Join string vid/pid at the API via hydra_id()."
+  ]
+}

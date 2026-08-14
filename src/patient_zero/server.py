@@ -1,10 +1,10 @@
-"""Launch the Patient Zero stub API.
+"""Launch the Patient Zero API.
 
 Binds 127.0.0.1:8080 by default.
 
 Port 8000 is occupied on this machine by another docker compose project
 (clashroyaledecks). HANDOFF.md still names localhost:8000 as the W2→W4
-contract; we serve 8080 so the stub is actually reachable. Override with
+contract; we serve 8080 so the API is actually reachable. Override with
 PATIENT_ZERO_HOST / PATIENT_ZERO_PORT.
 """
 

@@ -25,6 +25,9 @@
   var seenNodes = {};
   var debounceTimer = 0;
   var inflight = 0;
+  var blast = { ecosystem: "npm", name: "@tanstack/react-query", version: "5.101.4" };
+  var reachSid = "svc:mattermost";
+  var pinnedVids = ["npm:@tanstack/react-table@8.10.7", "npm:@tanstack/table-core@8.10.7"];
 
   var $ = function (id) {
     return document.getElementById(id);
@@ -124,16 +127,24 @@
   }
 
   function noteStub(payloads) {
+    var anyStub = false;
     for (var i = 0; i < payloads.length; i++) {
       if (payloads[i] && payloads[i].stub === true) {
-        bannerLocked = true;
-        var banner = $("banner");
-        var text = $("banner-text");
-        if (banner) banner.hidden = false;
-        if (text && !text.textContent) text.textContent = BANNER_COPY;
-        document.body.classList.add("is-stub");
+        anyStub = true;
         break;
       }
+    }
+    var banner = $("banner");
+    var text = $("banner-text");
+    if (anyStub) {
+      bannerLocked = true;
+      if (banner) banner.hidden = false;
+      if (text && !text.textContent) text.textContent = BANNER_COPY;
+      document.body.classList.add("is-stub");
+    } else {
+      bannerLocked = false;
+      if (banner) banner.hidden = true;
+      document.body.classList.remove("is-stub");
     }
   }
 
@@ -442,7 +453,7 @@
       head.appendChild(el("strong", "hit-name", prettyId(p.pid)));
       var score = el("span", "hit-score");
       score.textContent = typeof p.score === "number" ? p.score.toFixed(2) : "—";
-      score.title = "Mock propagation score — not precision";
+      score.title = "Path support among seed traversals — not precision";
       head.appendChild(score);
       row.appendChild(head);
       row.appendChild(pathRow(p.justification_path || []));
@@ -635,9 +646,9 @@
     var radiusReq = PZ.fetchApi("/api/blast-radius", {
       method: "POST",
       body: {
-        ecosystem: "npm",
-        name: "@tanstack/react-query",
-        version: "5.0.1",
+        ecosystem: blast.ecosystem || "npm",
+        name: blast.name || "@tanstack/react-query",
+        version: blast.version || "5.101.4",
         window_start: PZ.WORM_START,
         window_end: asOf,
         max_hops: 6
@@ -653,7 +664,7 @@
     });
     var reachReq = PZ.fetchApi("/api/reachability", {
       method: "POST",
-      body: { sid: "svc:stub-storefront", finding_vids: vids, as_of: asOf }
+      body: { sid: reachSid, finding_vids: vids.concat(pinnedVids), as_of: asOf }
     });
     var evidenceReq = PZ.fetchApi("/api/evidence");
     var leverageReq = PZ.fetchApi("/api/leverage");
@@ -727,11 +738,15 @@
     });
     PZ.probeLive().then(function () {
       setApiMode();
-      return PZ.fetchApi("/api/timeline");
-    }).then(function (tl) {
+      return Promise.all([PZ.fetchApi("/api/timeline"), PZ.fetchApi("/api/meta")]);
+    }).then(function (pair) {
+      var tl = pair[0];
+      var meta = pair[1];
       if (tl && typeof tl.window_end === "number") windowEnd = tl.window_end;
       if (tl && typeof tl.window_start === "number") windowStart = tl.window_start;
-      noteStub([tl]);
+      if (meta && meta.default_blast) blast = meta.default_blast;
+      if (meta && meta.default_sid) reachSid = meta.default_sid;
+      noteStub([tl, meta]);
       buildScrubMarks();
       updateClock(scrubToAsOf(Number(scrub.value)));
       refresh();
