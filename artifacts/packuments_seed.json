@@ -1,0 +1,1658 @@
+{
+  "contract": "pid, vid, has_install_script, install_hooks, maintainer_logins[], repo_url, published_at",
+  "note": "vid is always the IOC malicious version. npm unpublished those tarballs the evening of May 11, so vid_source=ioc_vid_unpublished means the version document is gone from the live packument. Install hooks are NOT copied from latest (wrong version). TanStack host manifests did not gain preinstall/install/postinstall/prepare \u2014 the prepare hook lived on the git optionalDependency @tanstack/setup. Seed has_install_script=false is therefore the correct property on the package itself, both then and now.",
+  "seed_rows": 84,
+  "seed_with_install_hooks": 0,
+  "seed_unpublished_from_registry": 84,
+  "seed_fetch_missing": 0,
+  "records": [
+    {
+      "pid": "npm:@tanstack/arktype-adapter",
+      "vid": "npm:@tanstack/arktype-adapter@1.166.12",
+      "has_install_script": false,
+      "install_hooks": [],
+      "maintainer_logins": [
+        "GitHub Actions",
+        "alemtuzlak",
+        "kevinvandy",
+        "schiller-manuel",
+        "tannerlinsley",
+        "tkdodo"
+      ],
+      "repo_url": "github:TanStack/router",
+      "published_at": 1778527239,
+      "vid_source": "ioc_vid_unpublished",
+      "requested_version": "1.166.12",
+      "live_latest": "1.167.0",
+      "fetch_ok": true,
+      "fetch_error": null
+    },
+    {
+      "pid": "npm:@tanstack/arktype-adapter",
+      "vid": "npm:@tanstack/arktype-adapter@1.166.15",
+      "has_install_script": false,
+      "install_hooks": [],
+      "maintainer_logins": [
+        "GitHub Actions",
+        "alemtuzlak",
+        "kevinvandy",
+        "schiller-manuel",
+        "tannerlinsley",
+        "tkdodo"
+      ],
+      "repo_url": "github:TanStack/router",
+      "published_at": 1778527574,
+      "vid_source": "ioc_vid_unpublished",
+      "requested_version": "1.166.15",
+      "live_latest": "1.167.0",
+      "fetch_ok": true,
+      "fetch_error": null
+    },
+    {
+      "pid": "npm:@tanstack/eslint-plugin-router",
+      "vid": "npm:@tanstack/eslint-plugin-router@1.161.9",
+      "has_install_script": false,
+      "install_hooks": [],
+      "maintainer_logins": [
+        "GitHub Actions",
+        "alemtuzlak",
+        "kevinvandy",
+        "schiller-manuel",
+        "tannerlinsley",
+        "tkdodo"
+      ],
+      "repo_url": "github:TanStack/router",
+      "published_at": 1778527240,
+      "vid_source": "ioc_vid_unpublished",
+      "requested_version": "1.161.9",
+      "live_latest": "1.162.0",
+      "fetch_ok": true,
+      "fetch_error": null
+    },
+    {
+      "pid": "npm:@tanstack/eslint-plugin-router",
+      "vid": "npm:@tanstack/eslint-plugin-router@1.161.12",
+      "has_install_script": false,
+      "install_hooks": [],
+      "maintainer_logins": [
+        "GitHub Actions",
+        "alemtuzlak",
+        "kevinvandy",
+        "schiller-manuel",
+        "tannerlinsley",
+        "tkdodo"
+      ],
+      "repo_url": "github:TanStack/router",
+      "published_at": 1778527576,
+      "vid_source": "ioc_vid_unpublished",
+      "requested_version": "1.161.12",
+      "live_latest": "1.162.0",
+      "fetch_ok": true,
+      "fetch_error": null
+    },
+    {
+      "pid": "npm:@tanstack/eslint-plugin-start",
+      "vid": "npm:@tanstack/eslint-plugin-start@0.0.4",
+      "has_install_script": false,
+      "install_hooks": [],
+      "maintainer_logins": [
+        "GitHub Actions",
+        "alemtuzlak",
+        "kevinvandy",
+        "schiller-manuel",
+        "tannerlinsley",
+        "tkdodo"
+      ],
+      "repo_url": "github:TanStack/router",
+      "published_at": 1778527241,
+      "vid_source": "ioc_vid_unpublished",
+      "requested_version": "0.0.4",
+      "live_latest": "0.1.0",
+      "fetch_ok": true,
+      "fetch_error": null
+    },
+    {
+      "pid": "npm:@tanstack/eslint-plugin-start",
+      "vid": "npm:@tanstack/eslint-plugin-start@0.0.7",
+      "has_install_script": false,
+      "install_hooks": [],
+      "maintainer_logins": [
+        "GitHub Actions",
+        "alemtuzlak",
+        "kevinvandy",
+        "schiller-manuel",
+        "tannerlinsley",
+        "tkdodo"
+      ],
+      "repo_url": "github:TanStack/router",
+      "published_at": 1778527576,
+      "vid_source": "ioc_vid_unpublished",
+      "requested_version": "0.0.7",
+      "live_latest": "0.1.0",
+      "fetch_ok": true,
+      "fetch_error": null
+    },
+    {
+      "pid": "npm:@tanstack/history",
+      "vid": "npm:@tanstack/history@1.161.9",
+      "has_install_script": false,
+      "install_hooks": [],
+      "maintainer_logins": [
+        "GitHub Actions",
+        "alemtuzlak",
+        "kevinvandy",
+        "tannerlinsley"
+      ],
+      "repo_url": "github:TanStack/router",
+      "published_at": 1778527239,
+      "vid_source": "ioc_vid_unpublished",
+      "requested_version": "1.161.9",
+      "live_latest": "1.162.1",
+      "fetch_ok": true,
+      "fetch_error": null
+    },
+    {
+      "pid": "npm:@tanstack/history",
+      "vid": "npm:@tanstack/history@1.161.12",
+      "has_install_script": false,
+      "install_hooks": [],
+      "maintainer_logins": [
+        "GitHub Actions",
+        "alemtuzlak",
+        "kevinvandy",
+        "tannerlinsley"
+      ],
+      "repo_url": "github:TanStack/router",
+      "published_at": 1778527574,
+      "vid_source": "ioc_vid_unpublished",
+      "requested_version": "1.161.12",
+      "live_latest": "1.162.1",
+      "fetch_ok": true,
+      "fetch_error": null
+    },
+    {
+      "pid": "npm:@tanstack/nitro-v2-vite-plugin",
+      "vid": "npm:@tanstack/nitro-v2-vite-plugin@1.154.12",
+      "has_install_script": false,
+      "install_hooks": [],
+      "maintainer_logins": [
+        "GitHub Actions",
+        "alemtuzlak",
+        "kevinvandy",
+        "schiller-manuel",
+        "tannerlinsley",
+        "tkdodo"
+      ],
+      "repo_url": "github:TanStack/router",
+      "published_at": 1778527239,
+      "vid_source": "ioc_vid_unpublished",
+      "requested_version": "1.154.12",
+      "live_latest": "1.155.0",
+      "fetch_ok": true,
+      "fetch_error": null
+    },
+    {
+      "pid": "npm:@tanstack/nitro-v2-vite-plugin",
+      "vid": "npm:@tanstack/nitro-v2-vite-plugin@1.154.15",
+      "has_install_script": false,
+      "install_hooks": [],
+      "maintainer_logins": [
+        "GitHub Actions",
+        "alemtuzlak",
+        "kevinvandy",
+        "schiller-manuel",
+        "tannerlinsley",
+        "tkdodo"
+      ],
+      "repo_url": "github:TanStack/router",
+      "published_at": 1778527575,
+      "vid_source": "ioc_vid_unpublished",
+      "requested_version": "1.154.15",
+      "live_latest": "1.155.0",
+      "fetch_ok": true,
+      "fetch_error": null
+    },
+    {
+      "pid": "npm:@tanstack/react-router",
+      "vid": "npm:@tanstack/react-router@1.169.5",
+      "has_install_script": false,
+      "install_hooks": [],
+      "maintainer_logins": [
+        "GitHub Actions",
+        "alemtuzlak",
+        "kevinvandy",
+        "tannerlinsley"
+      ],
+      "repo_url": "github:TanStack/router",
+      "published_at": 1778527242,
+      "vid_source": "ioc_vid_unpublished",
+      "requested_version": "1.169.5",
+      "live_latest": "1.170.28",
+      "fetch_ok": true,
+      "fetch_error": null
+    },
+    {
+      "pid": "npm:@tanstack/react-router",
+      "vid": "npm:@tanstack/react-router@1.169.8",
+      "has_install_script": false,
+      "install_hooks": [],
+      "maintainer_logins": [
+        "GitHub Actions",
+        "alemtuzlak",
+        "kevinvandy",
+        "tannerlinsley"
+      ],
+      "repo_url": "github:TanStack/router",
+      "published_at": 1778527577,
+      "vid_source": "ioc_vid_unpublished",
+      "requested_version": "1.169.8",
+      "live_latest": "1.170.28",
+      "fetch_ok": true,
+      "fetch_error": null
+    },
+    {
+      "pid": "npm:@tanstack/react-router-devtools",
+      "vid": "npm:@tanstack/react-router-devtools@1.166.16",
+      "has_install_script": false,
+      "install_hooks": [],
+      "maintainer_logins": [
+        "GitHub Actions",
+        "alemtuzlak",
+        "kevinvandy",
+        "tannerlinsley"
+      ],
+      "repo_url": "github:TanStack/router",
+      "published_at": 1778527239,
+      "vid_source": "ioc_vid_unpublished",
+      "requested_version": "1.166.16",
+      "live_latest": "1.167.1",
+      "fetch_ok": true,
+      "fetch_error": null
+    },
+    {
+      "pid": "npm:@tanstack/react-router-devtools",
+      "vid": "npm:@tanstack/react-router-devtools@1.166.19",
+      "has_install_script": false,
+      "install_hooks": [],
+      "maintainer_logins": [
+        "GitHub Actions",
+        "alemtuzlak",
+        "kevinvandy",
+        "tannerlinsley"
+      ],
+      "repo_url": "github:TanStack/router",
+      "published_at": 1778527575,
+      "vid_source": "ioc_vid_unpublished",
+      "requested_version": "1.166.19",
+      "live_latest": "1.167.1",
+      "fetch_ok": true,
+      "fetch_error": null
+    },
+    {
+      "pid": "npm:@tanstack/react-router-ssr-query",
+      "vid": "npm:@tanstack/react-router-ssr-query@1.166.15",
+      "has_install_script": false,
+      "install_hooks": [],
+      "maintainer_logins": [
+        "GitHub Actions",
+        "alemtuzlak",
+        "kevinvandy",
+        "schiller-manuel",
+        "tannerlinsley",
+        "tkdodo"
+      ],
+      "repo_url": "github:TanStack/router",
+      "published_at": 1778527239,
+      "vid_source": "ioc_vid_unpublished",
+      "requested_version": "1.166.15",
+      "live_latest": "1.167.1",
+      "fetch_ok": true,
+      "fetch_error": null
+    },
+    {
+      "pid": "npm:@tanstack/react-router-ssr-query",
+      "vid": "npm:@tanstack/react-router-ssr-query@1.166.18",
+      "has_install_script": false,
+      "install_hooks": [],
+      "maintainer_logins": [
+        "GitHub Actions",
+        "alemtuzlak",
+        "kevinvandy",
+        "schiller-manuel",
+        "tannerlinsley",
+        "tkdodo"
+      ],
+      "repo_url": "github:TanStack/router",
+      "published_at": 1778527574,
+      "vid_source": "ioc_vid_unpublished",
+      "requested_version": "1.166.18",
+      "live_latest": "1.167.1",
+      "fetch_ok": true,
+      "fetch_error": null
+    },
+    {
+      "pid": "npm:@tanstack/react-start",
+      "vid": "npm:@tanstack/react-start@1.167.68",
+      "has_install_script": false,
+      "install_hooks": [],
+      "maintainer_logins": [
+        "GitHub Actions",
+        "alemtuzlak",
+        "kevinvandy",
+        "tannerlinsley"
+      ],
+      "repo_url": "github:TanStack/router",
+      "published_at": 1778527242,
+      "vid_source": "ioc_vid_unpublished",
+      "requested_version": "1.167.68",
+      "live_latest": "1.168.45",
+      "fetch_ok": true,
+      "fetch_error": null
+    },
+    {
+      "pid": "npm:@tanstack/react-start",
+      "vid": "npm:@tanstack/react-start@1.167.71",
+      "has_install_script": false,
+      "install_hooks": [],
+      "maintainer_logins": [
+        "GitHub Actions",
+        "alemtuzlak",
+        "kevinvandy",
+        "tannerlinsley"
+      ],
+      "repo_url": "github:TanStack/router",
+      "published_at": 1778527576,
+      "vid_source": "ioc_vid_unpublished",
+      "requested_version": "1.167.71",
+      "live_latest": "1.168.45",
+      "fetch_ok": true,
+      "fetch_error": null
+    },
+    {
+      "pid": "npm:@tanstack/react-start-client",
+      "vid": "npm:@tanstack/react-start-client@1.166.51",
+      "has_install_script": false,
+      "install_hooks": [],
+      "maintainer_logins": [
+        "GitHub Actions",
+        "alemtuzlak",
+        "kevinvandy",
+        "tannerlinsley"
+      ],
+      "repo_url": "github:TanStack/router",
+      "published_at": 1778527239,
+      "vid_source": "ioc_vid_unpublished",
+      "requested_version": "1.166.51",
+      "live_latest": "1.168.26",
+      "fetch_ok": true,
+      "fetch_error": null
+    },
+    {
+      "pid": "npm:@tanstack/react-start-client",
+      "vid": "npm:@tanstack/react-start-client@1.166.54",
+      "has_install_script": false,
+      "install_hooks": [],
+      "maintainer_logins": [
+        "GitHub Actions",
+        "alemtuzlak",
+        "kevinvandy",
+        "tannerlinsley"
+      ],
+      "repo_url": "github:TanStack/router",
+      "published_at": 1778527575,
+      "vid_source": "ioc_vid_unpublished",
+      "requested_version": "1.166.54",
+      "live_latest": "1.168.26",
+      "fetch_ok": true,
+      "fetch_error": null
+    },
+    {
+      "pid": "npm:@tanstack/react-start-rsc",
+      "vid": "npm:@tanstack/react-start-rsc@0.0.47",
+      "has_install_script": false,
+      "install_hooks": [],
+      "maintainer_logins": [
+        "GitHub Actions",
+        "alemtuzlak",
+        "kevinvandy",
+        "tannerlinsley"
+      ],
+      "repo_url": "github:TanStack/router",
+      "published_at": 1778527241,
+      "vid_source": "ioc_vid_unpublished",
+      "requested_version": "0.0.47",
+      "live_latest": "0.1.44",
+      "fetch_ok": true,
+      "fetch_error": null
+    },
+    {
+      "pid": "npm:@tanstack/react-start-rsc",
+      "vid": "npm:@tanstack/react-start-rsc@0.0.50",
+      "has_install_script": false,
+      "install_hooks": [],
+      "maintainer_logins": [
+        "GitHub Actions",
+        "alemtuzlak",
+        "kevinvandy",
+        "tannerlinsley"
+      ],
+      "repo_url": "github:TanStack/router",
+      "published_at": 1778527576,
+      "vid_source": "ioc_vid_unpublished",
+      "requested_version": "0.0.50",
+      "live_latest": "0.1.44",
+      "fetch_ok": true,
+      "fetch_error": null
+    },
+    {
+      "pid": "npm:@tanstack/react-start-server",
+      "vid": "npm:@tanstack/react-start-server@1.166.55",
+      "has_install_script": false,
+      "install_hooks": [],
+      "maintainer_logins": [
+        "GitHub Actions",
+        "alemtuzlak",
+        "kevinvandy",
+        "tannerlinsley"
+      ],
+      "repo_url": "github:TanStack/router",
+      "published_at": 1778527240,
+      "vid_source": "ioc_vid_unpublished",
+      "requested_version": "1.166.55",
+      "live_latest": "1.167.33",
+      "fetch_ok": true,
+      "fetch_error": null
+    },
+    {
+      "pid": "npm:@tanstack/react-start-server",
+      "vid": "npm:@tanstack/react-start-server@1.166.58",
+      "has_install_script": false,
+      "install_hooks": [],
+      "maintainer_logins": [
+        "GitHub Actions",
+        "alemtuzlak",
+        "kevinvandy",
+        "tannerlinsley"
+      ],
+      "repo_url": "github:TanStack/router",
+      "published_at": 1778527574,
+      "vid_source": "ioc_vid_unpublished",
+      "requested_version": "1.166.58",
+      "live_latest": "1.167.33",
+      "fetch_ok": true,
+      "fetch_error": null
+    },
+    {
+      "pid": "npm:@tanstack/router-cli",
+      "vid": "npm:@tanstack/router-cli@1.166.46",
+      "has_install_script": false,
+      "install_hooks": [],
+      "maintainer_logins": [
+        "GitHub Actions",
+        "alemtuzlak",
+        "kevinvandy",
+        "tannerlinsley"
+      ],
+      "repo_url": "github:TanStack/router",
+      "published_at": 1778527240,
+      "vid_source": "ioc_vid_unpublished",
+      "requested_version": "1.166.46",
+      "live_latest": "1.167.29",
+      "fetch_ok": true,
+      "fetch_error": null
+    },
+    {
+      "pid": "npm:@tanstack/router-cli",
+      "vid": "npm:@tanstack/router-cli@1.166.49",
+      "has_install_script": false,
+      "install_hooks": [],
+      "maintainer_logins": [
+        "GitHub Actions",
+        "alemtuzlak",
+        "kevinvandy",
+        "tannerlinsley"
+      ],
+      "repo_url": "github:TanStack/router",
+      "published_at": 1778527575,
+      "vid_source": "ioc_vid_unpublished",
+      "requested_version": "1.166.49",
+      "live_latest": "1.167.29",
+      "fetch_ok": true,
+      "fetch_error": null
+    },
+    {
+      "pid": "npm:@tanstack/router-core",
+      "vid": "npm:@tanstack/router-core@1.169.5",
+      "has_install_script": false,
+      "install_hooks": [],
+      "maintainer_logins": [
+        "GitHub Actions",
+        "alemtuzlak",
+        "kevinvandy",
+        "tannerlinsley"
+      ],
+      "repo_url": "github:TanStack/router",
+      "published_at": 1778527242,
+      "vid_source": "ioc_vid_unpublished",
+      "requested_version": "1.169.5",
+      "live_latest": "1.171.23",
+      "fetch_ok": true,
+      "fetch_error": null
+    },
+    {
+      "pid": "npm:@tanstack/router-core",
+      "vid": "npm:@tanstack/router-core@1.169.8",
+      "has_install_script": false,
+      "install_hooks": [],
+      "maintainer_logins": [
+        "GitHub Actions",
+        "alemtuzlak",
+        "kevinvandy",
+        "tannerlinsley"
+      ],
+      "repo_url": "github:TanStack/router",
+      "published_at": 1778527578,
+      "vid_source": "ioc_vid_unpublished",
+      "requested_version": "1.169.8",
+      "live_latest": "1.171.23",
+      "fetch_ok": true,
+      "fetch_error": null
+    },
+    {
+      "pid": "npm:@tanstack/router-devtools",
+      "vid": "npm:@tanstack/router-devtools@1.166.16",
+      "has_install_script": false,
+      "install_hooks": [],
+      "maintainer_logins": [
+        "GitHub Actions",
+        "alemtuzlak",
+        "kevinvandy",
+        "tannerlinsley"
+      ],
+      "repo_url": "github:TanStack/router",
+      "published_at": 1778527239,
+      "vid_source": "ioc_vid_unpublished",
+      "requested_version": "1.166.16",
+      "live_latest": "1.167.1",
+      "fetch_ok": true,
+      "fetch_error": null
+    },
+    {
+      "pid": "npm:@tanstack/router-devtools",
+      "vid": "npm:@tanstack/router-devtools@1.166.19",
+      "has_install_script": false,
+      "install_hooks": [],
+      "maintainer_logins": [
+        "GitHub Actions",
+        "alemtuzlak",
+        "kevinvandy",
+        "tannerlinsley"
+      ],
+      "repo_url": "github:TanStack/router",
+      "published_at": 1778527574,
+      "vid_source": "ioc_vid_unpublished",
+      "requested_version": "1.166.19",
+      "live_latest": "1.167.1",
+      "fetch_ok": true,
+      "fetch_error": null
+    },
+    {
+      "pid": "npm:@tanstack/router-devtools-core",
+      "vid": "npm:@tanstack/router-devtools-core@1.167.6",
+      "has_install_script": false,
+      "install_hooks": [],
+      "maintainer_logins": [
+        "GitHub Actions",
+        "alemtuzlak",
+        "kevinvandy",
+        "tannerlinsley"
+      ],
+      "repo_url": "github:TanStack/router",
+      "published_at": 1778527240,
+      "vid_source": "ioc_vid_unpublished",
+      "requested_version": "1.167.6",
+      "live_latest": "1.168.1",
+      "fetch_ok": true,
+      "fetch_error": null
+    },
+    {
+      "pid": "npm:@tanstack/router-devtools-core",
+      "vid": "npm:@tanstack/router-devtools-core@1.167.9",
+      "has_install_script": false,
+      "install_hooks": [],
+      "maintainer_logins": [
+        "GitHub Actions",
+        "alemtuzlak",
+        "kevinvandy",
+        "tannerlinsley"
+      ],
+      "repo_url": "github:TanStack/router",
+      "published_at": 1778527576,
+      "vid_source": "ioc_vid_unpublished",
+      "requested_version": "1.167.9",
+      "live_latest": "1.168.1",
+      "fetch_ok": true,
+      "fetch_error": null
+    },
+    {
+      "pid": "npm:@tanstack/router-generator",
+      "vid": "npm:@tanstack/router-generator@1.166.45",
+      "has_install_script": false,
+      "install_hooks": [],
+      "maintainer_logins": [
+        "GitHub Actions",
+        "alemtuzlak",
+        "kevinvandy",
+        "tannerlinsley"
+      ],
+      "repo_url": "github:TanStack/router",
+      "published_at": 1778527241,
+      "vid_source": "ioc_vid_unpublished",
+      "requested_version": "1.166.45",
+      "live_latest": "1.167.29",
+      "fetch_ok": true,
+      "fetch_error": null
+    },
+    {
+      "pid": "npm:@tanstack/router-generator",
+      "vid": "npm:@tanstack/router-generator@1.166.48",
+      "has_install_script": false,
+      "install_hooks": [],
+      "maintainer_logins": [
+        "GitHub Actions",
+        "alemtuzlak",
+        "kevinvandy",
+        "tannerlinsley"
+      ],
+      "repo_url": "github:TanStack/router",
+      "published_at": 1778527576,
+      "vid_source": "ioc_vid_unpublished",
+      "requested_version": "1.166.48",
+      "live_latest": "1.167.29",
+      "fetch_ok": true,
+      "fetch_error": null
+    },
+    {
+      "pid": "npm:@tanstack/router-plugin",
+      "vid": "npm:@tanstack/router-plugin@1.167.38",
+      "has_install_script": false,
+      "install_hooks": [],
+      "maintainer_logins": [
+        "GitHub Actions",
+        "alemtuzlak",
+        "kevinvandy",
+        "tannerlinsley"
+      ],
+      "repo_url": "github:TanStack/router",
+      "published_at": 1778527241,
+      "vid_source": "ioc_vid_unpublished",
+      "requested_version": "1.167.38",
+      "live_latest": "1.168.31",
+      "fetch_ok": true,
+      "fetch_error": null
+    },
+    {
+      "pid": "npm:@tanstack/router-plugin",
+      "vid": "npm:@tanstack/router-plugin@1.167.41",
+      "has_install_script": false,
+      "install_hooks": [],
+      "maintainer_logins": [
+        "GitHub Actions",
+        "alemtuzlak",
+        "kevinvandy",
+        "tannerlinsley"
+      ],
+      "repo_url": "github:TanStack/router",
+      "published_at": 1778527577,
+      "vid_source": "ioc_vid_unpublished",
+      "requested_version": "1.167.41",
+      "live_latest": "1.168.31",
+      "fetch_ok": true,
+      "fetch_error": null
+    },
+    {
+      "pid": "npm:@tanstack/router-ssr-query-core",
+      "vid": "npm:@tanstack/router-ssr-query-core@1.168.3",
+      "has_install_script": false,
+      "install_hooks": [],
+      "maintainer_logins": [
+        "GitHub Actions",
+        "alemtuzlak",
+        "kevinvandy",
+        "schiller-manuel",
+        "tannerlinsley",
+        "tkdodo"
+      ],
+      "repo_url": "github:TanStack/router",
+      "published_at": 1778527240,
+      "vid_source": "ioc_vid_unpublished",
+      "requested_version": "1.168.3",
+      "live_latest": "1.169.1",
+      "fetch_ok": true,
+      "fetch_error": null
+    },
+    {
+      "pid": "npm:@tanstack/router-ssr-query-core",
+      "vid": "npm:@tanstack/router-ssr-query-core@1.168.6",
+      "has_install_script": false,
+      "install_hooks": [],
+      "maintainer_logins": [
+        "GitHub Actions",
+        "alemtuzlak",
+        "kevinvandy",
+        "schiller-manuel",
+        "tannerlinsley",
+        "tkdodo"
+      ],
+      "repo_url": "github:TanStack/router",
+      "published_at": 1778527575,
+      "vid_source": "ioc_vid_unpublished",
+      "requested_version": "1.168.6",
+      "live_latest": "1.169.1",
+      "fetch_ok": true,
+      "fetch_error": null
+    },
+    {
+      "pid": "npm:@tanstack/router-utils",
+      "vid": "npm:@tanstack/router-utils@1.161.11",
+      "has_install_script": false,
+      "install_hooks": [],
+      "maintainer_logins": [
+        "GitHub Actions",
+        "alemtuzlak",
+        "kevinvandy",
+        "schiller-manuel",
+        "tannerlinsley",
+        "tkdodo"
+      ],
+      "repo_url": "github:TanStack/router",
+      "published_at": 1778527239,
+      "vid_source": "ioc_vid_unpublished",
+      "requested_version": "1.161.11",
+      "live_latest": "1.162.2",
+      "fetch_ok": true,
+      "fetch_error": null
+    },
+    {
+      "pid": "npm:@tanstack/router-utils",
+      "vid": "npm:@tanstack/router-utils@1.161.14",
+      "has_install_script": false,
+      "install_hooks": [],
+      "maintainer_logins": [
+        "GitHub Actions",
+        "alemtuzlak",
+        "kevinvandy",
+        "schiller-manuel",
+        "tannerlinsley",
+        "tkdodo"
+      ],
+      "repo_url": "github:TanStack/router",
+      "published_at": 1778527575,
+      "vid_source": "ioc_vid_unpublished",
+      "requested_version": "1.161.14",
+      "live_latest": "1.162.2",
+      "fetch_ok": true,
+      "fetch_error": null
+    },
+    {
+      "pid": "npm:@tanstack/router-vite-plugin",
+      "vid": "npm:@tanstack/router-vite-plugin@1.166.53",
+      "has_install_script": false,
+      "install_hooks": [],
+      "maintainer_logins": [
+        "GitHub Actions",
+        "alemtuzlak",
+        "kevinvandy",
+        "tannerlinsley"
+      ],
+      "repo_url": "github:TanStack/router",
+      "published_at": 1778527239,
+      "vid_source": "ioc_vid_unpublished",
+      "requested_version": "1.166.53",
+      "live_latest": "1.167.31",
+      "fetch_ok": true,
+      "fetch_error": null
+    },
+    {
+      "pid": "npm:@tanstack/router-vite-plugin",
+      "vid": "npm:@tanstack/router-vite-plugin@1.166.56",
+      "has_install_script": false,
+      "install_hooks": [],
+      "maintainer_logins": [
+        "GitHub Actions",
+        "alemtuzlak",
+        "kevinvandy",
+        "tannerlinsley"
+      ],
+      "repo_url": "github:TanStack/router",
+      "published_at": 1778527574,
+      "vid_source": "ioc_vid_unpublished",
+      "requested_version": "1.166.56",
+      "live_latest": "1.167.31",
+      "fetch_ok": true,
+      "fetch_error": null
+    },
+    {
+      "pid": "npm:@tanstack/solid-router",
+      "vid": "npm:@tanstack/solid-router@1.169.5",
+      "has_install_script": false,
+      "install_hooks": [],
+      "maintainer_logins": [
+        "GitHub Actions",
+        "alemtuzlak",
+        "kevinvandy",
+        "tannerlinsley"
+      ],
+      "repo_url": "github:TanStack/router",
+      "published_at": 1778527243,
+      "vid_source": "ioc_vid_unpublished",
+      "requested_version": "1.169.5",
+      "live_latest": "1.170.26",
+      "fetch_ok": true,
+      "fetch_error": null
+    },
+    {
+      "pid": "npm:@tanstack/solid-router",
+      "vid": "npm:@tanstack/solid-router@1.169.8",
+      "has_install_script": false,
+      "install_hooks": [],
+      "maintainer_logins": [
+        "GitHub Actions",
+        "alemtuzlak",
+        "kevinvandy",
+        "tannerlinsley"
+      ],
+      "repo_url": "github:TanStack/router",
+      "published_at": 1778527578,
+      "vid_source": "ioc_vid_unpublished",
+      "requested_version": "1.169.8",
+      "live_latest": "1.170.26",
+      "fetch_ok": true,
+      "fetch_error": null
+    },
+    {
+      "pid": "npm:@tanstack/solid-router-devtools",
+      "vid": "npm:@tanstack/solid-router-devtools@1.166.16",
+      "has_install_script": false,
+      "install_hooks": [],
+      "maintainer_logins": [
+        "GitHub Actions",
+        "alemtuzlak",
+        "kevinvandy",
+        "tannerlinsley"
+      ],
+      "repo_url": "github:TanStack/router",
+      "published_at": 1778527239,
+      "vid_source": "ioc_vid_unpublished",
+      "requested_version": "1.166.16",
+      "live_latest": "1.167.1",
+      "fetch_ok": true,
+      "fetch_error": null
+    },
+    {
+      "pid": "npm:@tanstack/solid-router-devtools",
+      "vid": "npm:@tanstack/solid-router-devtools@1.166.19",
+      "has_install_script": false,
+      "install_hooks": [],
+      "maintainer_logins": [
+        "GitHub Actions",
+        "alemtuzlak",
+        "kevinvandy",
+        "tannerlinsley"
+      ],
+      "repo_url": "github:TanStack/router",
+      "published_at": 1778527575,
+      "vid_source": "ioc_vid_unpublished",
+      "requested_version": "1.166.19",
+      "live_latest": "1.167.1",
+      "fetch_ok": true,
+      "fetch_error": null
+    },
+    {
+      "pid": "npm:@tanstack/solid-router-ssr-query",
+      "vid": "npm:@tanstack/solid-router-ssr-query@1.166.15",
+      "has_install_script": false,
+      "install_hooks": [],
+      "maintainer_logins": [
+        "GitHub Actions",
+        "alemtuzlak",
+        "kevinvandy",
+        "schiller-manuel",
+        "tannerlinsley",
+        "tkdodo"
+      ],
+      "repo_url": "github:TanStack/router",
+      "published_at": 1778527239,
+      "vid_source": "ioc_vid_unpublished",
+      "requested_version": "1.166.15",
+      "live_latest": "1.167.1",
+      "fetch_ok": true,
+      "fetch_error": null
+    },
+    {
+      "pid": "npm:@tanstack/solid-router-ssr-query",
+      "vid": "npm:@tanstack/solid-router-ssr-query@1.166.18",
+      "has_install_script": false,
+      "install_hooks": [],
+      "maintainer_logins": [
+        "GitHub Actions",
+        "alemtuzlak",
+        "kevinvandy",
+        "schiller-manuel",
+        "tannerlinsley",
+        "tkdodo"
+      ],
+      "repo_url": "github:TanStack/router",
+      "published_at": 1778527574,
+      "vid_source": "ioc_vid_unpublished",
+      "requested_version": "1.166.18",
+      "live_latest": "1.167.1",
+      "fetch_ok": true,
+      "fetch_error": null
+    },
+    {
+      "pid": "npm:@tanstack/solid-start",
+      "vid": "npm:@tanstack/solid-start@1.167.65",
+      "has_install_script": false,
+      "install_hooks": [],
+      "maintainer_logins": [
+        "GitHub Actions",
+        "alemtuzlak",
+        "kevinvandy",
+        "tannerlinsley"
+      ],
+      "repo_url": "github:TanStack/router",
+      "published_at": 1778527241,
+      "vid_source": "ioc_vid_unpublished",
+      "requested_version": "1.167.65",
+      "live_latest": "1.168.43",
+      "fetch_ok": true,
+      "fetch_error": null
+    },
+    {
+      "pid": "npm:@tanstack/solid-start",
+      "vid": "npm:@tanstack/solid-start@1.167.68",
+      "has_install_script": false,
+      "install_hooks": [],
+      "maintainer_logins": [
+        "GitHub Actions",
+        "alemtuzlak",
+        "kevinvandy",
+        "tannerlinsley"
+      ],
+      "repo_url": "github:TanStack/router",
+      "published_at": 1778527576,
+      "vid_source": "ioc_vid_unpublished",
+      "requested_version": "1.167.68",
+      "live_latest": "1.168.43",
+      "fetch_ok": true,
+      "fetch_error": null
+    },
+    {
+      "pid": "npm:@tanstack/solid-start-client",
+      "vid": "npm:@tanstack/solid-start-client@1.166.50",
+      "has_install_script": false,
+      "install_hooks": [],
+      "maintainer_logins": [
+        "GitHub Actions",
+        "alemtuzlak",
+        "kevinvandy",
+        "tannerlinsley"
+      ],
+      "repo_url": "github:TanStack/router",
+      "published_at": 1778527239,
+      "vid_source": "ioc_vid_unpublished",
+      "requested_version": "1.166.50",
+      "live_latest": "1.168.25",
+      "fetch_ok": true,
+      "fetch_error": null
+    },
+    {
+      "pid": "npm:@tanstack/solid-start-client",
+      "vid": "npm:@tanstack/solid-start-client@1.166.53",
+      "has_install_script": false,
+      "install_hooks": [],
+      "maintainer_logins": [
+        "GitHub Actions",
+        "alemtuzlak",
+        "kevinvandy",
+        "tannerlinsley"
+      ],
+      "repo_url": "github:TanStack/router",
+      "published_at": 1778527575,
+      "vid_source": "ioc_vid_unpublished",
+      "requested_version": "1.166.53",
+      "live_latest": "1.168.25",
+      "fetch_ok": true,
+      "fetch_error": null
+    },
+    {
+      "pid": "npm:@tanstack/solid-start-server",
+      "vid": "npm:@tanstack/solid-start-server@1.166.54",
+      "has_install_script": false,
+      "install_hooks": [],
+      "maintainer_logins": [
+        "GitHub Actions",
+        "alemtuzlak",
+        "kevinvandy",
+        "tannerlinsley"
+      ],
+      "repo_url": "github:TanStack/router",
+      "published_at": 1778527239,
+      "vid_source": "ioc_vid_unpublished",
+      "requested_version": "1.166.54",
+      "live_latest": "1.167.32",
+      "fetch_ok": true,
+      "fetch_error": null
+    },
+    {
+      "pid": "npm:@tanstack/solid-start-server",
+      "vid": "npm:@tanstack/solid-start-server@1.166.57",
+      "has_install_script": false,
+      "install_hooks": [],
+      "maintainer_logins": [
+        "GitHub Actions",
+        "alemtuzlak",
+        "kevinvandy",
+        "tannerlinsley"
+      ],
+      "repo_url": "github:TanStack/router",
+      "published_at": 1778527575,
+      "vid_source": "ioc_vid_unpublished",
+      "requested_version": "1.166.57",
+      "live_latest": "1.167.32",
+      "fetch_ok": true,
+      "fetch_error": null
+    },
+    {
+      "pid": "npm:@tanstack/start-client-core",
+      "vid": "npm:@tanstack/start-client-core@1.168.5",
+      "has_install_script": false,
+      "install_hooks": [],
+      "maintainer_logins": [
+        "GitHub Actions",
+        "alemtuzlak",
+        "kevinvandy",
+        "tannerlinsley"
+      ],
+      "repo_url": "github:TanStack/router",
+      "published_at": 1778527241,
+      "vid_source": "ioc_vid_unpublished",
+      "requested_version": "1.168.5",
+      "live_latest": "1.170.23",
+      "fetch_ok": true,
+      "fetch_error": null
+    },
+    {
+      "pid": "npm:@tanstack/start-client-core",
+      "vid": "npm:@tanstack/start-client-core@1.168.8",
+      "has_install_script": false,
+      "install_hooks": [],
+      "maintainer_logins": [
+        "GitHub Actions",
+        "alemtuzlak",
+        "kevinvandy",
+        "tannerlinsley"
+      ],
+      "repo_url": "github:TanStack/router",
+      "published_at": 1778527576,
+      "vid_source": "ioc_vid_unpublished",
+      "requested_version": "1.168.8",
+      "live_latest": "1.170.23",
+      "fetch_ok": true,
+      "fetch_error": null
+    },
+    {
+      "pid": "npm:@tanstack/start-fn-stubs",
+      "vid": "npm:@tanstack/start-fn-stubs@1.161.9",
+      "has_install_script": false,
+      "install_hooks": [],
+      "maintainer_logins": [
+        "GitHub Actions",
+        "alemtuzlak",
+        "kevinvandy",
+        "schiller-manuel",
+        "tannerlinsley",
+        "tkdodo"
+      ],
+      "repo_url": "github:TanStack/router",
+      "published_at": 1778527239,
+      "vid_source": "ioc_vid_unpublished",
+      "requested_version": "1.161.9",
+      "live_latest": "1.162.0",
+      "fetch_ok": true,
+      "fetch_error": null
+    },
+    {
+      "pid": "npm:@tanstack/start-fn-stubs",
+      "vid": "npm:@tanstack/start-fn-stubs@1.161.12",
+      "has_install_script": false,
+      "install_hooks": [],
+      "maintainer_logins": [
+        "GitHub Actions",
+        "alemtuzlak",
+        "kevinvandy",
+        "schiller-manuel",
+        "tannerlinsley",
+        "tkdodo"
+      ],
+      "repo_url": "github:TanStack/router",
+      "published_at": 1778527574,
+      "vid_source": "ioc_vid_unpublished",
+      "requested_version": "1.161.12",
+      "live_latest": "1.162.0",
+      "fetch_ok": true,
+      "fetch_error": null
+    },
+    {
+      "pid": "npm:@tanstack/start-plugin-core",
+      "vid": "npm:@tanstack/start-plugin-core@1.169.23",
+      "has_install_script": false,
+      "install_hooks": [],
+      "maintainer_logins": [
+        "GitHub Actions",
+        "alemtuzlak",
+        "kevinvandy",
+        "tannerlinsley"
+      ],
+      "repo_url": "github:TanStack/router",
+      "published_at": 1778527243,
+      "vid_source": "ioc_vid_unpublished",
+      "requested_version": "1.169.23",
+      "live_latest": "1.171.35",
+      "fetch_ok": true,
+      "fetch_error": null
+    },
+    {
+      "pid": "npm:@tanstack/start-plugin-core",
+      "vid": "npm:@tanstack/start-plugin-core@1.169.26",
+      "has_install_script": false,
+      "install_hooks": [],
+      "maintainer_logins": [
+        "GitHub Actions",
+        "alemtuzlak",
+        "kevinvandy",
+        "tannerlinsley"
+      ],
+      "repo_url": "github:TanStack/router",
+      "published_at": 1778527578,
+      "vid_source": "ioc_vid_unpublished",
+      "requested_version": "1.169.26",
+      "live_latest": "1.171.35",
+      "fetch_ok": true,
+      "fetch_error": null
+    },
+    {
+      "pid": "npm:@tanstack/start-server-core",
+      "vid": "npm:@tanstack/start-server-core@1.167.33",
+      "has_install_script": false,
+      "install_hooks": [],
+      "maintainer_logins": [
+        "GitHub Actions",
+        "alemtuzlak",
+        "kevinvandy",
+        "tannerlinsley"
+      ],
+      "repo_url": "github:TanStack/router",
+      "published_at": 1778527240,
+      "vid_source": "ioc_vid_unpublished",
+      "requested_version": "1.167.33",
+      "live_latest": "1.169.27",
+      "fetch_ok": true,
+      "fetch_error": null
+    },
+    {
+      "pid": "npm:@tanstack/start-server-core",
+      "vid": "npm:@tanstack/start-server-core@1.167.36",
+      "has_install_script": false,
+      "install_hooks": [],
+      "maintainer_logins": [
+        "GitHub Actions",
+        "alemtuzlak",
+        "kevinvandy",
+        "tannerlinsley"
+      ],
+      "repo_url": "github:TanStack/router",
+      "published_at": 1778527576,
+      "vid_source": "ioc_vid_unpublished",
+      "requested_version": "1.167.36",
+      "live_latest": "1.169.27",
+      "fetch_ok": true,
+      "fetch_error": null
+    },
+    {
+      "pid": "npm:@tanstack/start-static-server-functions",
+      "vid": "npm:@tanstack/start-static-server-functions@1.166.44",
+      "has_install_script": false,
+      "install_hooks": [],
+      "maintainer_logins": [
+        "GitHub Actions",
+        "alemtuzlak",
+        "kevinvandy",
+        "tannerlinsley"
+      ],
+      "repo_url": "github:TanStack/router",
+      "published_at": 1778527240,
+      "vid_source": "ioc_vid_unpublished",
+      "requested_version": "1.166.44",
+      "live_latest": "1.167.28",
+      "fetch_ok": true,
+      "fetch_error": null
+    },
+    {
+      "pid": "npm:@tanstack/start-static-server-functions",
+      "vid": "npm:@tanstack/start-static-server-functions@1.166.47",
+      "has_install_script": false,
+      "install_hooks": [],
+      "maintainer_logins": [
+        "GitHub Actions",
+        "alemtuzlak",
+        "kevinvandy",
+        "tannerlinsley"
+      ],
+      "repo_url": "github:TanStack/router",
+      "published_at": 1778527574,
+      "vid_source": "ioc_vid_unpublished",
+      "requested_version": "1.166.47",
+      "live_latest": "1.167.28",
+      "fetch_ok": true,
+      "fetch_error": null
+    },
+    {
+      "pid": "npm:@tanstack/start-storage-context",
+      "vid": "npm:@tanstack/start-storage-context@1.166.38",
+      "has_install_script": false,
+      "install_hooks": [],
+      "maintainer_logins": [
+        "GitHub Actions",
+        "alemtuzlak",
+        "kevinvandy",
+        "tannerlinsley"
+      ],
+      "repo_url": "github:TanStack/router",
+      "published_at": 1778527239,
+      "vid_source": "ioc_vid_unpublished",
+      "requested_version": "1.166.38",
+      "live_latest": "1.167.25",
+      "fetch_ok": true,
+      "fetch_error": null
+    },
+    {
+      "pid": "npm:@tanstack/start-storage-context",
+      "vid": "npm:@tanstack/start-storage-context@1.166.41",
+      "has_install_script": false,
+      "install_hooks": [],
+      "maintainer_logins": [
+        "GitHub Actions",
+        "alemtuzlak",
+        "kevinvandy",
+        "tannerlinsley"
+      ],
+      "repo_url": "github:TanStack/router",
+      "published_at": 1778527574,
+      "vid_source": "ioc_vid_unpublished",
+      "requested_version": "1.166.41",
+      "live_latest": "1.167.25",
+      "fetch_ok": true,
+      "fetch_error": null
+    },
+    {
+      "pid": "npm:@tanstack/valibot-adapter",
+      "vid": "npm:@tanstack/valibot-adapter@1.166.12",
+      "has_install_script": false,
+      "install_hooks": [],
+      "maintainer_logins": [
+        "GitHub Actions",
+        "alemtuzlak",
+        "kevinvandy",
+        "schiller-manuel",
+        "tannerlinsley",
+        "tkdodo"
+      ],
+      "repo_url": "github:TanStack/router",
+      "published_at": 1778527239,
+      "vid_source": "ioc_vid_unpublished",
+      "requested_version": "1.166.12",
+      "live_latest": "1.167.0",
+      "fetch_ok": true,
+      "fetch_error": null
+    },
+    {
+      "pid": "npm:@tanstack/valibot-adapter",
+      "vid": "npm:@tanstack/valibot-adapter@1.166.15",
+      "has_install_script": false,
+      "install_hooks": [],
+      "maintainer_logins": [
+        "GitHub Actions",
+        "alemtuzlak",
+        "kevinvandy",
+        "schiller-manuel",
+        "tannerlinsley",
+        "tkdodo"
+      ],
+      "repo_url": "github:TanStack/router",
+      "published_at": 1778527575,
+      "vid_source": "ioc_vid_unpublished",
+      "requested_version": "1.166.15",
+      "live_latest": "1.167.0",
+      "fetch_ok": true,
+      "fetch_error": null
+    },
+    {
+      "pid": "npm:@tanstack/virtual-file-routes",
+      "vid": "npm:@tanstack/virtual-file-routes@1.161.10",
+      "has_install_script": false,
+      "install_hooks": [],
+      "maintainer_logins": [
+        "GitHub Actions",
+        "alemtuzlak",
+        "kevinvandy",
+        "schiller-manuel",
+        "tannerlinsley",
+        "tkdodo"
+      ],
+      "repo_url": "github:TanStack/router",
+      "published_at": 1778527240,
+      "vid_source": "ioc_vid_unpublished",
+      "requested_version": "1.161.10",
+      "live_latest": "1.162.0",
+      "fetch_ok": true,
+      "fetch_error": null
+    },
+    {
+      "pid": "npm:@tanstack/virtual-file-routes",
+      "vid": "npm:@tanstack/virtual-file-routes@1.161.13",
+      "has_install_script": false,
+      "install_hooks": [],
+      "maintainer_logins": [
+        "GitHub Actions",
+        "alemtuzlak",
+        "kevinvandy",
+        "schiller-manuel",
+        "tannerlinsley",
+        "tkdodo"
+      ],
+      "repo_url": "github:TanStack/router",
+      "published_at": 1778527575,
+      "vid_source": "ioc_vid_unpublished",
+      "requested_version": "1.161.13",
+      "live_latest": "1.162.0",
+      "fetch_ok": true,
+      "fetch_error": null
+    },
+    {
+      "pid": "npm:@tanstack/vue-router",
+      "vid": "npm:@tanstack/vue-router@1.169.5",
+      "has_install_script": false,
+      "install_hooks": [],
+      "maintainer_logins": [
+        "GitHub Actions",
+        "alemtuzlak",
+        "kevinvandy",
+        "tannerlinsley"
+      ],
+      "repo_url": "github:TanStack/router",
+      "published_at": 1778527242,
+      "vid_source": "ioc_vid_unpublished",
+      "requested_version": "1.169.5",
+      "live_latest": "1.170.25",
+      "fetch_ok": true,
+      "fetch_error": null
+    },
+    {
+      "pid": "npm:@tanstack/vue-router",
+      "vid": "npm:@tanstack/vue-router@1.169.8",
+      "has_install_script": false,
+      "install_hooks": [],
+      "maintainer_logins": [
+        "GitHub Actions",
+        "alemtuzlak",
+        "kevinvandy",
+        "tannerlinsley"
+      ],
+      "repo_url": "github:TanStack/router",
+      "published_at": 1778527577,
+      "vid_source": "ioc_vid_unpublished",
+      "requested_version": "1.169.8",
+      "live_latest": "1.170.25",
+      "fetch_ok": true,
+      "fetch_error": null
+    },
+    {
+      "pid": "npm:@tanstack/vue-router-devtools",
+      "vid": "npm:@tanstack/vue-router-devtools@1.166.16",
+      "has_install_script": false,
+      "install_hooks": [],
+      "maintainer_logins": [
+        "GitHub Actions",
+        "alemtuzlak",
+        "kevinvandy",
+        "tannerlinsley"
+      ],
+      "repo_url": "github:TanStack/router",
+      "published_at": 1778527239,
+      "vid_source": "ioc_vid_unpublished",
+      "requested_version": "1.166.16",
+      "live_latest": "1.167.1",
+      "fetch_ok": true,
+      "fetch_error": null
+    },
+    {
+      "pid": "npm:@tanstack/vue-router-devtools",
+      "vid": "npm:@tanstack/vue-router-devtools@1.166.19",
+      "has_install_script": false,
+      "install_hooks": [],
+      "maintainer_logins": [
+        "GitHub Actions",
+        "alemtuzlak",
+        "kevinvandy",
+        "tannerlinsley"
+      ],
+      "repo_url": "github:TanStack/router",
+      "published_at": 1778527574,
+      "vid_source": "ioc_vid_unpublished",
+      "requested_version": "1.166.19",
+      "live_latest": "1.167.1",
+      "fetch_ok": true,
+      "fetch_error": null
+    },
+    {
+      "pid": "npm:@tanstack/vue-router-ssr-query",
+      "vid": "npm:@tanstack/vue-router-ssr-query@1.166.15",
+      "has_install_script": false,
+      "install_hooks": [],
+      "maintainer_logins": [
+        "GitHub Actions",
+        "alemtuzlak",
+        "kevinvandy",
+        "schiller-manuel",
+        "tannerlinsley",
+        "tkdodo"
+      ],
+      "repo_url": "github:TanStack/router",
+      "published_at": 1778527239,
+      "vid_source": "ioc_vid_unpublished",
+      "requested_version": "1.166.15",
+      "live_latest": "1.167.1",
+      "fetch_ok": true,
+      "fetch_error": null
+    },
+    {
+      "pid": "npm:@tanstack/vue-router-ssr-query",
+      "vid": "npm:@tanstack/vue-router-ssr-query@1.166.18",
+      "has_install_script": false,
+      "install_hooks": [],
+      "maintainer_logins": [
+        "GitHub Actions",
+        "alemtuzlak",
+        "kevinvandy",
+        "schiller-manuel",
+        "tannerlinsley",
+        "tkdodo"
+      ],
+      "repo_url": "github:TanStack/router",
+      "published_at": 1778527574,
+      "vid_source": "ioc_vid_unpublished",
+      "requested_version": "1.166.18",
+      "live_latest": "1.167.1",
+      "fetch_ok": true,
+      "fetch_error": null
+    },
+    {
+      "pid": "npm:@tanstack/vue-start",
+      "vid": "npm:@tanstack/vue-start@1.167.61",
+      "has_install_script": false,
+      "install_hooks": [],
+      "maintainer_logins": [
+        "GitHub Actions",
+        "alemtuzlak",
+        "kevinvandy",
+        "tannerlinsley"
+      ],
+      "repo_url": "github:TanStack/router",
+      "published_at": 1778527240,
+      "vid_source": "ioc_vid_unpublished",
+      "requested_version": "1.167.61",
+      "live_latest": "1.168.42",
+      "fetch_ok": true,
+      "fetch_error": null
+    },
+    {
+      "pid": "npm:@tanstack/vue-start",
+      "vid": "npm:@tanstack/vue-start@1.167.64",
+      "has_install_script": false,
+      "install_hooks": [],
+      "maintainer_logins": [
+        "GitHub Actions",
+        "alemtuzlak",
+        "kevinvandy",
+        "tannerlinsley"
+      ],
+      "repo_url": "github:TanStack/router",
+      "published_at": 1778527575,
+      "vid_source": "ioc_vid_unpublished",
+      "requested_version": "1.167.64",
+      "live_latest": "1.168.42",
+      "fetch_ok": true,
+      "fetch_error": null
+    },
+    {
+      "pid": "npm:@tanstack/vue-start-client",
+      "vid": "npm:@tanstack/vue-start-client@1.166.46",
+      "has_install_script": false,
+      "install_hooks": [],
+      "maintainer_logins": [
+        "GitHub Actions",
+        "alemtuzlak",
+        "kevinvandy",
+        "tannerlinsley"
+      ],
+      "repo_url": "github:TanStack/router",
+      "published_at": 1778527239,
+      "vid_source": "ioc_vid_unpublished",
+      "requested_version": "1.166.46",
+      "live_latest": "1.167.28",
+      "fetch_ok": true,
+      "fetch_error": null
+    },
+    {
+      "pid": "npm:@tanstack/vue-start-client",
+      "vid": "npm:@tanstack/vue-start-client@1.166.49",
+      "has_install_script": false,
+      "install_hooks": [],
+      "maintainer_logins": [
+        "GitHub Actions",
+        "alemtuzlak",
+        "kevinvandy",
+        "tannerlinsley"
+      ],
+      "repo_url": "github:TanStack/router",
+      "published_at": 1778527574,
+      "vid_source": "ioc_vid_unpublished",
+      "requested_version": "1.166.49",
+      "live_latest": "1.167.28",
+      "fetch_ok": true,
+      "fetch_error": null
+    },
+    {
+      "pid": "npm:@tanstack/vue-start-server",
+      "vid": "npm:@tanstack/vue-start-server@1.166.50",
+      "has_install_script": false,
+      "install_hooks": [],
+      "maintainer_logins": [
+        "GitHub Actions",
+        "alemtuzlak",
+        "kevinvandy",
+        "tannerlinsley"
+      ],
+      "repo_url": "github:TanStack/router",
+      "published_at": 1778527240,
+      "vid_source": "ioc_vid_unpublished",
+      "requested_version": "1.166.50",
+      "live_latest": "1.167.32",
+      "fetch_ok": true,
+      "fetch_error": null
+    },
+    {
+      "pid": "npm:@tanstack/vue-start-server",
+      "vid": "npm:@tanstack/vue-start-server@1.166.53",
+      "has_install_script": false,
+      "install_hooks": [],
+      "maintainer_logins": [
+        "GitHub Actions",
+        "alemtuzlak",
+        "kevinvandy",
+        "tannerlinsley"
+      ],
+      "repo_url": "github:TanStack/router",
+      "published_at": 1778527575,
+      "vid_source": "ioc_vid_unpublished",
+      "requested_version": "1.166.53",
+      "live_latest": "1.167.32",
+      "fetch_ok": true,
+      "fetch_error": null
+    },
+    {
+      "pid": "npm:@tanstack/zod-adapter",
+      "vid": "npm:@tanstack/zod-adapter@1.166.12",
+      "has_install_script": false,
+      "install_hooks": [],
+      "maintainer_logins": [
+        "GitHub Actions",
+        "alemtuzlak",
+        "kevinvandy",
+        "schiller-manuel",
+        "tannerlinsley",
+        "tkdodo"
+      ],
+      "repo_url": "github:TanStack/router",
+      "published_at": 1778527239,
+      "vid_source": "ioc_vid_unpublished",
+      "requested_version": "1.166.12",
+      "live_latest": "1.167.0",
+      "fetch_ok": true,
+      "fetch_error": null
+    },
+    {
+      "pid": "npm:@tanstack/zod-adapter",
+      "vid": "npm:@tanstack/zod-adapter@1.166.15",
+      "has_install_script": false,
+      "install_hooks": [],
+      "maintainer_logins": [
+        "GitHub Actions",
+        "alemtuzlak",
+        "kevinvandy",
+        "schiller-manuel",
+        "tannerlinsley",
+        "tkdodo"
+      ],
+      "repo_url": "github:TanStack/router",
+      "published_at": 1778527574,
+      "vid_source": "ioc_vid_unpublished",
+      "requested_version": "1.166.15",
+      "live_latest": "1.167.0",
+      "fetch_ok": true,
+      "fetch_error": null
+    }
+  ]
+}

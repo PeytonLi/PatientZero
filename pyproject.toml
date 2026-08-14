@@ -1,0 +1,41 @@
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "patient-zero"
+version = "0.1.0"
+description = "Supply-chain blast radius over two graph topologies. Serves on :8080 (not :8000 — that port is occupied by clashroyaledecks)."
+readme = "README.md"
+license = { file = "LICENSE" }
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi",
+    "uvicorn[standard]",
+    "neo4j",
+    "pydantic",
+    "pyarrow",
+    "duckdb",
+]
+
+[project.optional-dependencies]
+test = [
+    "httpx",
+    "pytest",
+]
+
+[project.scripts]
+patient-zero = "patient_zero.server:main"
+
+[tool.setuptools.package-dir]
+"" = "src"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+patient_zero = ["static/*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]

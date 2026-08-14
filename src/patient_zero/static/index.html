@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Patient Zero — supply chain contact tracing</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Azeret+Mono:ital,wght@0,400;0,500;0,600&family=Big+Shoulders+Display:wght@600;700;800&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&display=swap" rel="stylesheet">
+<meta name="theme-color" content="#0c0f0b">
+<link rel="stylesheet" href="./app.css">
+</head>
+<body>
+
+<!-- ============ synthetic-data guard. Never remove. ============ -->
+<div id="banner" class="banner" hidden role="alert" aria-live="assertive">
+  <span class="banner-tag">SYNTHETIC</span>
+  <span id="banner-text"></span>
+</div>
+
+<header class="masthead">
+  <div class="brand">
+    <span class="brand-mark" aria-hidden="true"></span>
+    <div>
+      <h1>Patient&nbsp;Zero</h1>
+      <p class="tagline">A worm does not travel down dependency edges. It travels along <em>trust</em> edges.</p>
+    </div>
+  </div>
+  <div class="masthead-meta">
+    <div class="clock">
+      <div class="clock-label">AS OF</div>
+      <div class="clock-time" id="clock-time">--:--:--</div>
+      <div class="clock-date" id="clock-date">11 MAY 2026 · UTC</div>
+    </div>
+    <div class="phase" id="phase">—</div>
+    <div class="api-mode" id="api-mode">MOCK</div>
+  </div>
+</header>
+
+<!-- ============ the scrubbable clock ============ -->
+<section class="scrubber" aria-label="Timeline scrubber">
+  <div class="scrub-marks" id="scrub-marks"></div>
+  <input id="scrub" type="range" min="0" max="1000" value="360" step="1"
+         aria-label="Drag to move the investigation clock. Every panel re-queries at this instant.">
+  <div class="scrub-hint">
+    <span>Drag the clock. Every panel below re-queries HydraDB at that instant —
+      possible because the dependency topology is bitemporal, affordable because reads run at
+      <strong>14,554&nbsp;QPS</strong> while writes crawl at <strong>225/sec</strong>.</span>
+    <span class="scrub-keys">← → to step</span>
+  </div>
+</section>
+
+<main class="stage">
+
+  <!-- ============ LEFT: spread across the trust topology ============ -->
+  <section class="panel map-panel" aria-labelledby="map-h">
+    <div class="panel-head">
+      <h2 id="map-h">Spread <span class="topo topo-trust">TRUST topology</span></h2>
+      <div class="panel-head-right"><span class="chip" id="map-count">—</span></div>
+    </div>
+
+    <div class="map-wrap">
+      <svg id="map" viewBox="0 0 720 560" preserveAspectRatio="xMidYMid meet" role="img"
+           aria-label="Trust topology spread map, npm on the left, PyPI on the right">
+        <defs>
+          <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor"/>
+          </marker>
+          <filter id="glow" x="-60%" y="-60%" width="220%" height="220%">
+            <feGaussianBlur stdDeviation="4" result="b"/>
+            <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+        </defs>
+        <g id="map-edges"></g>
+        <g id="map-nodes"></g>
+        <g id="map-chrome"></g>
+      </svg>
+      <div id="crossing" class="crossing" hidden>
+        <div class="crossing-rule">npm&nbsp;→&nbsp;PyPI</div>
+        <p><strong>The edge a dependency graph cannot cross.</strong>
+           No npm package depends on a PyPI package. The worm crossed anyway — on a shared
+           maintainer credential. That is the whole thesis, in one edge.</p>
+      </div>
+      <p class="map-empty" id="map-empty">Nothing compromised at this instant. Scrub forward.</p>
+    </div>
+
+    <div class="legend">
+      <span><i class="dot dot-origin"></i>index case</span>
+      <span><i class="dot dot-hit"></i>observed compromise</span>
+      <span><i class="dot dot-pred"></i>forecast</span>
+      <span><i class="line line-trust"></i>trust edge</span>
+      <span><i class="line line-cross"></i>ecosystem crossing</span>
+    </div>
+  </section>
+
+  <!-- ============ RIGHT: the four products ============ -->
+  <div class="rail">
+
+    <section class="panel" aria-labelledby="radius-h" id="p-radius">
+      <div class="panel-head">
+        <h2 id="radius-h">Blast radius <span class="topo topo-dep">DEPENDENCY topology · backward · bitemporal</span></h2>
+        <div class="panel-head-right"><span class="chip" id="radius-count">—</span></div>
+      </div>
+      <div class="panel-body" id="radius-body"></div>
+      <details class="q"><summary><span class="q-icon">⌗</span> Show query<span class="q-lat" id="radius-lat"></span></summary><pre id="radius-cypher"></pre></details>
+    </section>
+
+    <section class="panel" aria-labelledby="forecast-h" id="p-forecast">
+      <div class="panel-head">
+        <h2 id="forecast-h">Forecast <span class="sub">who falls next</span></h2>
+        <div class="panel-head-right">
+          <div class="seg" role="group" aria-label="Forecast topology">
+            <button class="seg-btn is-on" data-topology="trust">TRUST</button>
+            <button class="seg-btn" data-topology="dependency">DEPENDENCY <span class="seg-note">control</span></button>
+          </div>
+          <span class="chip" id="forecast-count">—</span>
+        </div>
+      </div>
+      <div class="panel-body" id="forecast-body"></div>
+      <details class="q"><summary><span class="q-icon">⌗</span> Show query<span class="q-lat" id="forecast-lat"></span></summary><pre id="forecast-cypher"></pre></details>
+    </section>
+
+    <section class="panel" aria-labelledby="index-h" id="p-index">
+      <div class="panel-head">
+        <h2 id="index-h">Index case <span class="sub">backward contact tracing</span></h2>
+        <div class="panel-head-right"><span class="chip" id="index-count">—</span></div>
+      </div>
+      <div class="panel-body" id="index-body"></div>
+      <details class="q"><summary><span class="q-icon">⌗</span> Show query<span class="q-lat" id="index-lat"></span></summary><pre id="index-cypher"></pre></details>
+    </section>
+
+    <section class="panel" aria-labelledby="reach-h" id="p-reach">
+      <div class="panel-head">
+        <h2 id="reach-h">Triage <span class="sub">what actually executes</span></h2>
+        <div class="panel-head-right"><span class="chip" id="reach-count">—</span></div>
+      </div>
+      <div class="panel-body" id="reach-body"></div>
+      <details class="q"><summary><span class="q-icon">⌗</span> Show query<span class="q-lat" id="reach-lat"></span></summary><pre id="reach-cypher"></pre></details>
+    </section>
+
+  </div>
+</main>
+
+<aside class="leverage" id="p-leverage" aria-labelledby="lev-h">
+  <div class="lev-label">
+    <h2 id="lev-h">Leverage</h2>
+    <span class="sub">if this credential is stolen</span>
+  </div>
+  <div class="lev-track" id="leverage-body"></div>
+  <div class="lev-cut" id="leverage-cut"></div>
+  <details class="q"><summary><span class="q-icon">⌗</span> Show query<span class="q-lat" id="leverage-lat"></span></summary><pre id="leverage-cypher"></pre></details>
+</aside>
+
+<!-- ============ FOOTER: the evidence bar. Never hidden behind a tab. ============ -->
+<footer class="evidence" aria-labelledby="ev-h">
+  <div class="ev-title">
+    <h2 id="ev-h">Evidence</h2>
+    <span class="ev-sub">same query · two topologies</span>
+  </div>
+
+  <div class="ev-grid">
+    <div class="ev-cell">
+      <div class="ev-k">precision@K — trust</div>
+      <div class="ev-v" id="ev-pt">—</div>
+      <div class="ev-bar"><span id="ev-pt-bar" class="ev-fill ev-fill-trust"></span></div>
+    </div>
+    <div class="ev-cell ev-control">
+      <div class="ev-k">precision@K — dependency <span class="ev-tag">NEGATIVE CONTROL</span></div>
+      <div class="ev-v" id="ev-pd">—</div>
+      <div class="ev-bar"><span id="ev-pd-bar" class="ev-fill ev-fill-dep"></span></div>
+    </div>
+    <div class="ev-cell">
+      <div class="ev-k">R₀ — trust</div>
+      <div class="ev-v" id="ev-rt">—</div>
+      <div class="ev-note">&gt; 1 ⇒ epidemic</div>
+    </div>
+    <div class="ev-cell ev-control">
+      <div class="ev-k">R₀ — dependency</div>
+      <div class="ev-v" id="ev-rd">—</div>
+      <div class="ev-note">&lt; 1 ⇒ dies out</div>
+    </div>
+    <div class="ev-cell ev-verdict">
+      <div class="ev-k">verdict</div>
+      <div class="ev-v ev-v-text" id="ev-verdict">—</div>
+    </div>
+  </div>
+
+  <details class="q q-ev"><summary><span class="q-icon">⌗</span> Show query<span class="q-lat" id="ev-lat"></span></summary><pre id="ev-cypher"></pre></details>
+</footer>
+
+<script src="./mock.js"></script>
+<script src="./app.js"></script>
+</body>
+</html>
