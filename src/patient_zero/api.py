@@ -55,7 +55,7 @@ class BlastRadiusReq(BaseModel):
 
 
 class ForecastReq(BaseModel):
-    seeds: list[str] = Field(default_factory=list)
+    seeds: list[str] | None = None
     as_of: int = WORM_START + 360
     k: int = Field(default=10, ge=1, le=500)
     topology: Literal["trust", "dependency"] = "trust"
@@ -64,7 +64,7 @@ class ForecastReq(BaseModel):
 
 
 class IndexCaseReq(BaseModel):
-    observed: list[str] = Field(default_factory=list)
+    observed: list[str] | None = None
     as_of: int = WORM_START + 360
     k: int = Field(default=5, ge=1, le=100)
     max_hops: int = Field(default=4, ge=1, le=20)

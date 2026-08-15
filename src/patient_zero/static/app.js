@@ -30,6 +30,7 @@
   var pinnedVids = ["npm:@tanstack/react-table@8.10.7", "npm:@tanstack/table-core@8.10.7"];
   var seedPids = [];
   var clockNodes = [];
+  var findingVids = [];
 
   var $ = function (id) {
     return document.getElementById(id);
@@ -39,6 +40,19 @@
     if (asOf < PZ.T26) return [];
     if (seedPids.length) return seedPids.slice();
     return PZ.seedsAt(asOf);
+  }
+
+  function vidsForClock(asOf) {
+    if (PZ.mode === "live") {
+      return findingVids
+        .filter(function (row) {
+          return row && row.vid && (row.at == null || row.at <= asOf);
+        })
+        .map(function (row) {
+          return row.vid;
+        });
+    }
+    return PZ.vidsAt(asOf).concat(pinnedVids);
   }
 
   function debounceRefresh() {
@@ -470,8 +484,15 @@
     }
 
     if (!preds.length) {
+      var seedCount = payload && payload.stats && payload.stats.seeds;
       body.appendChild(
-        el("p", "empty-line", "Seed set still forming. Scrub to 19:26 to name who falls next.")
+        el(
+          "p",
+          "empty-line",
+          seedCount
+            ? "No forecast paths in this bound."
+            : "Seed set still forming. Scrub to 19:26 to name who falls next."
+        )
       );
       return;
     }
@@ -511,7 +532,14 @@
     }
 
     if (!cands.length) {
-      body.appendChild(el("p", "empty-line", "Not enough observations yet. Scrub to 19:26."));
+      var obsCount = payload && payload.stats && payload.stats.observed;
+      body.appendChild(
+        el(
+          "p",
+          "empty-line",
+          obsCount ? "No index-case paths in this bound." : "Not enough observations yet. Scrub to 19:26."
+        )
+      );
       return;
     }
     cands.forEach(function (c, i) {
@@ -683,15 +711,55 @@
     }
   }
 
+  var evidenceOnce = null;
+  var leverageOnce = null;
+
+  function loadStablePanels() {
+    if (!evidenceOnce) {
+      evidenceOnce = PZ.fetchApi("/api/evidence").then(function (evidence) {
+        noteStub([evidence]);
+        renderEvidence(evidence);
+        return evidence;
+      }).catch(function (err) {
+        evidenceOnce = null;
+        console.error("evidence failed", err);
+      });
+    }
+    if (!leverageOnce) {
+      leverageOnce = PZ.fetchApi("/api/leverage").then(function (leverage) {
+        renderLeverage(leverage);
+        return leverage;
+      }).catch(function (err) {
+        leverageOnce = null;
+        console.error("leverage failed", err);
+      });
+    }
+  }
+
   function refresh() {
     var scrub = $("scrub");
     var asOf = scrubToAsOf(Number(scrub.value));
     updateClock(asOf);
     var seq = ++inflight;
     var seeds = seedsForClock(asOf);
-    var vids = PZ.vidsAt(asOf);
+    var vids = vidsForClock(asOf);
 
-    var radiusReq = PZ.fetchApi("/api/blast-radius", {
+    function stillCurrent() {
+      return seq === inflight;
+    }
+
+    function onPanel(fn) {
+      return function (payload) {
+        if (!stillCurrent()) return;
+        noteStub([payload]);
+        setApiMode();
+        fn(payload);
+      };
+    }
+
+    renderMap(asOf, null);
+
+    PZ.fetchApi("/api/blast-radius", {
       method: "POST",
       body: {
         ecosystem: blast.ecosystem || "npm",
@@ -701,42 +769,41 @@
         window_end: asOf,
         max_hops: 6
       }
+    }).then(onPanel(function (radius) {
+      renderRadius(radius, asOf);
+    })).catch(function (err) {
+      console.error("blast failed", err);
     });
-    var forecastReq = PZ.fetchApi("/api/forecast", {
+
+    PZ.fetchApi("/api/forecast", {
       method: "POST",
       body: { seeds: seeds, as_of: asOf, k: 8, topology: topology }
+    }).then(onPanel(function (forecast) {
+      renderForecast(forecast);
+      renderMap(asOf, forecast);
+    })).catch(function (err) {
+      console.error("forecast failed", err);
     });
-    var indexReq = PZ.fetchApi("/api/index-case", {
+
+    PZ.fetchApi("/api/index-case", {
       method: "POST",
       body: { observed: seeds, as_of: asOf, k: 5 }
-    });
-    var reachReq = PZ.fetchApi("/api/reachability", {
-      method: "POST",
-      body: { sid: reachSid, finding_vids: vids.concat(pinnedVids), as_of: asOf }
-    });
-    var evidenceReq = PZ.fetchApi("/api/evidence");
-    var leverageReq = PZ.fetchApi("/api/leverage");
-
-    Promise.all([radiusReq, forecastReq, indexReq, reachReq, evidenceReq, leverageReq]).then(function (all) {
-      if (seq !== inflight) return;
-      var radius = all[0];
-      var forecast = all[1];
-      var indexCase = all[2];
-      var reach = all[3];
-      var evidence = all[4];
-      var leverage = all[5];
-      noteStub(all);
-      setApiMode();
-      renderRadius(radius, asOf);
-      renderForecast(forecast);
+    }).then(onPanel(function (indexCase) {
       renderIndex(indexCase);
-      renderReach(reach);
-      renderEvidence(evidence);
-      renderLeverage(leverage);
-      renderMap(asOf, forecast);
-    }).catch(function (err) {
-      console.error("refresh failed", err);
+    })).catch(function (err) {
+      console.error("index-case failed", err);
     });
+
+    PZ.fetchApi("/api/reachability", {
+      method: "POST",
+      body: { sid: reachSid, finding_vids: vids, as_of: asOf }
+    }).then(onPanel(function (reach) {
+      renderReach(reach);
+    })).catch(function (err) {
+      console.error("reachability failed", err);
+    });
+
+    loadStablePanels();
   }
 
   function onScrubInput() {
@@ -796,6 +863,7 @@
       if (meta && meta.default_blast) blast = meta.default_blast;
       if (meta && meta.default_sid) reachSid = meta.default_sid;
       if (meta && meta.seed_pids && meta.seed_pids.length) seedPids = meta.seed_pids;
+      if (meta && Array.isArray(meta.finding_vids)) findingVids = meta.finding_vids;
       noteStub([tl, meta]);
       buildScrubMarks();
       updateClock(scrubToAsOf(Number(scrub.value)));

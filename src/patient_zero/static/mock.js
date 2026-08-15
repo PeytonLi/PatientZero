@@ -388,7 +388,7 @@
       var topology = b.topology === "dependency" ? "dependency" : "trust";
       var trust = topology === "trust";
       var hopsF = typeof b.max_hops === "number" ? b.max_hops : 3;
-      var seeds = b.seeds && b.seeds.length ? b.seeds : seedsAt(asOf);
+      var seeds = Array.isArray(b.seeds) ? b.seeds : seedsAt(asOf);
       var src = trust ? TRUST_FORECAST : DEP_FORECAST;
       var preds = [];
       if (asOf >= T26 && seeds.length) {
@@ -419,7 +419,7 @@
 
     if (p === "/api/index-case") {
       var hopsI = typeof b.max_hops === "number" ? b.max_hops : 4;
-      var observed = b.observed && b.observed.length ? b.observed : seedsAt(asOf);
+      var observed = Array.isArray(b.observed) ? b.observed : seedsAt(asOf);
       var kinds = [
         {
           kind: "workflow",
@@ -606,7 +606,10 @@
           version: "5.101.4"
         },
         default_sid: "svc:mattermost",
-        seed_pids: SEED_PACKAGES.map(function (s) { return s.pid; })
+        seed_pids: SEED_PACKAGES.map(function (s) { return s.pid; }),
+        finding_vids: FINDINGS.map(function (f) {
+          return { vid: f.vid, at: f.at };
+        })
       }, 8);
     }
 
@@ -689,6 +692,11 @@
           payload = JSON.stringify(body);
         }
         return nativeFetch(base + path, { method: method, headers: headers, body: payload }).then(function (r) {
+          if (!r.ok) {
+            return r.text().then(function (text) {
+              throw new Error((r.status || 0) + " " + path + " " + text.slice(0, 180));
+            });
+          }
           return r.json();
         });
       }

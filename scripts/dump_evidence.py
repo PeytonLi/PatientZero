@@ -27,14 +27,14 @@ def main() -> None:
     engine = Engine.live(run_paths=run)
     t0 = time.perf_counter()
     trust = engine.forecast(
-        seeds=[], as_of=AS_OF, k=K, topology="trust", max_hops=3, limit=K
+        seeds=None, as_of=AS_OF, k=K, topology="trust", max_hops=3, limit=K
     )
     dep = engine.forecast(
-        seeds=[], as_of=AS_OF, k=K, topology="dependency", max_hops=3, limit=K
+        seeds=None, as_of=AS_OF, k=K, topology="dependency", max_hops=3, limit=K
     )
     evid = engine.evidence(k=K, as_of=AS_OF)
     lev = engine.leverage(k=5, max_hops=4, limit=K)
-    idx = engine.index_case(observed=[], as_of=AS_OF, k=5, max_hops=4, limit=50)
+    idx = engine.index_case(observed=None, as_of=AS_OF, k=5, max_hops=4, limit=50)
     elapsed = round(time.perf_counter() - t0, 3)
     payload = {
         "as_of": AS_OF,

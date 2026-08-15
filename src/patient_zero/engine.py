@@ -8,9 +8,11 @@ server rejects MATCH+CALL and `WHERE all(r IN relationships(path) ...)`.
 
 from __future__ import annotations
 
+import copy
 import logging
 import threading
 from collections import defaultdict
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from typing import Any, Callable
 
@@ -29,6 +31,7 @@ _KIND = {"Maintainer": "maintainer", "Repo": "repo", "Workflow": "workflow", "Se
 _SHARED_LABELS = frozenset({"Maintainer", "Repo", "Workflow"})
 VECTOR_DEFAULT = 1
 VECTOR_TRUST_WORKFLOW = 2  # pull_request_target or OIDC publish; fixed before any live run
+READ_WORKERS = 8  # HydraDB reads scale; writes do not. Cap in-flight SSpaths.
 
 
 def _bound(limit: int, k: int | None = None) -> int:
@@ -191,12 +194,15 @@ class Engine:
         self.catalog = catalog
         self.run_paths = run_paths
         self._forecast_lock = threading.Lock()
+        self._key_locks: dict[tuple[Any, ...], threading.Lock] = {}
+        self._read_sema = threading.Semaphore(READ_WORKERS)
         self._evidence_cache: dict[tuple[int, int], dict[str, Any]] = {}
         self._forecast_cache: dict[tuple[Any, ...], dict[str, Any]] = {}
         self._forecast_reached: dict[tuple[Any, ...], dict[str, frozenset[str]]] = {}
         self._forecast_covers: dict[tuple[Any, ...], dict[str, frozenset[str]]] = {}
         self._forecast_entity_kind: dict[tuple[Any, ...], dict[str, str]] = {}
         self._forecast_entity_path: dict[tuple[Any, ...], dict[str, list[str]]] = {}
+        self._index_cache: dict[tuple[Any, ...], dict[str, Any]] = {}
 
     @classmethod
     def live(
@@ -233,11 +239,12 @@ class Engine:
         )
 
     def _safe_paths(self, cypher: str, source: str) -> list[Any]:
-        try:
-            return list(self.run_paths(cypher, {"sourceNode": hydra_id(source)}) or [])
-        except Exception:
-            log.exception("SSpaths failed for %s", source)
-            return []
+        with self._read_sema:
+            try:
+                return list(self.run_paths(cypher, {"sourceNode": hydra_id(source)}) or [])
+            except Exception:
+                log.exception("SSpaths failed for %s", source)
+                return []
 
     def blast_radius(
         self,
@@ -299,28 +306,48 @@ class Engine:
             },
         }
 
+    def _lock_for(self, key: tuple[Any, ...]) -> threading.Lock:
+        with self._forecast_lock:
+            lock = self._key_locks.get(key)
+            if lock is None:
+                lock = threading.Lock()
+                self._key_locks[key] = lock
+            return lock
+
+    def _map_sources(self, sources: list[str], fn):
+        if len(sources) <= 1:
+            return [fn(src) for src in sources]
+        workers = min(READ_WORKERS, len(sources))
+        with ThreadPoolExecutor(max_workers=workers) as pool:
+            return list(pool.map(fn, sources))
+
+    def _resolve_ids(self, ids: list[str] | None) -> list[str]:
+        if ids is None:
+            return sorted(self.catalog.seed_pids)
+        return list(ids)
+
     def forecast(
         self,
         *,
-        seeds: list[str],
+        seeds: list[str] | None,
         as_of: int,
         k: int,
         topology: str,
         max_hops: int,
         limit: int,
     ) -> dict[str, Any]:
-        seed_list = list(seeds) or sorted(self.catalog.seed_pids)
+        seed_list = self._resolve_ids(seeds)
         seed_set = set(seed_list)
         trust = topology == "trust"
         cache_key = _forecast_key(topology, seed_list, as_of, k, max_hops, limit)
         cached = self._forecast_cache.get(cache_key)
         if cached is not None:
-            return cached
-        with self._forecast_lock:
+            return copy.deepcopy(cached)
+        with self._lock_for(cache_key):
             cached = self._forecast_cache.get(cache_key)
             if cached is not None:
-                return cached
-            return self._forecast_compute(
+                return copy.deepcopy(cached)
+            body = self._forecast_compute(
                 seed_list=seed_list,
                 seed_set=seed_set,
                 trust=trust,
@@ -331,6 +358,7 @@ class Engine:
                 limit=limit,
                 cache_key=cache_key,
             )
+            return copy.deepcopy(body)
 
     def _forecast_compute(
         self,
@@ -376,11 +404,13 @@ class Engine:
         covers: dict[str, set[str]] = defaultdict(set)
         entity_kind: dict[str, str] = {}
         entity_path: dict[str, list[str]] = {}
-        for src in sources:
+
+        def walk(src: str) -> list[tuple]:
             src_pid = src
             if not trust:
                 rec = self.catalog.rec(src)
                 src_pid = (rec.row.get("pid") if rec else None) or src
+            hits: list[tuple] = []
             for raw in self._safe_paths(cypher, src):
                 decoded = self.decode(raw)
                 if decoded is None:
@@ -390,17 +420,21 @@ class Engine:
                 cand = self._forecast_candidate(decoded, seed_set, trust)
                 if not cand:
                     continue
-                weight = _path_weight(decoded, self.catalog)
+                entity, label = _shared_on_path(decoded)
+                hits.append((src_pid, cand, _path_weight(decoded, self.catalog), decoded.stables, entity, label))
+            return hits
+
+        for hits in self._map_sources(sources, walk):
+            for src_pid, cand, weight, stables, entity, label in hits:
                 scores[cand] += weight
                 if weight >= best_w.get(cand, float("-inf")):
-                    example[cand] = decoded.stables
+                    example[cand] = stables
                     best_w[cand] = weight
                 reached_by_source[src_pid].add(cand)
-                entity, label = _shared_on_path(decoded)
                 if entity:
                     covers[cand].add(entity)
                     entity_kind.setdefault(entity, _KIND.get(label, "maintainer"))
-                    entity_path.setdefault(entity, decoded.stables)
+                    entity_path.setdefault(entity, stables)
         ranked = sorted(scores, key=lambda pid: (-scores[pid], pid))[:k]
         peak = max(scores.values(), default=1.0)
         preds = [
@@ -453,14 +487,41 @@ class Engine:
     def index_case(
         self,
         *,
-        observed: list[str],
+        observed: list[str] | None,
         as_of: int,
         k: int,
         max_hops: int,
         limit: int,
     ) -> dict[str, Any]:
-        observed_list = list(observed) or sorted(self.catalog.seed_pids)
+        observed_list = self._resolve_ids(observed)
         bound = _bound(limit, k)
+        cache_key = ("index", tuple(observed_list), as_of, k, max_hops, bound)
+        cached = self._index_cache.get(cache_key)
+        if cached is not None:
+            return copy.deepcopy(cached)
+        with self._lock_for(cache_key):
+            cached = self._index_cache.get(cache_key)
+            if cached is not None:
+                return copy.deepcopy(cached)
+            body = self._index_compute(
+                observed_list=observed_list,
+                as_of=as_of,
+                k=k,
+                max_hops=max_hops,
+                bound=bound,
+            )
+            self._index_cache[cache_key] = body
+            return copy.deepcopy(body)
+
+    def _index_compute(
+        self,
+        *,
+        observed_list: list[str],
+        as_of: int,
+        k: int,
+        max_hops: int,
+        bound: int,
+    ) -> dict[str, Any]:
         cypher = ss_paths(
             rel_types=T2_RELS,
             direction="both",
@@ -468,18 +529,22 @@ class Engine:
             path_count=bound,
             result_limit=bound,
         )
-        coverage: dict[str, set[str]] = defaultdict(set)
         example: dict[str, list[str]] = {}
         kind_of: dict[str, str] = {}
         best: dict[tuple[str, str], float] = {}
-        for obs in observed_list:
-            if obs not in self.catalog.by_stable:
-                continue
+        sources = [obs for obs in observed_list if obs in self.catalog.by_stable]
+
+        def walk(obs: str) -> list[tuple[str, DecodedPath, int]]:
+            hits: list[tuple[str, DecodedPath, int]] = []
             for raw in self._safe_paths(cypher, obs):
                 decoded = self.decode(raw)
                 if decoded is None:
                     continue
-                vector = _path_vector(decoded, self.catalog)
+                hits.append((obs, decoded, _path_vector(decoded, self.catalog)))
+            return hits
+
+        for hits in self._map_sources(sources, walk):
+            for obs, decoded, vector in hits:
                 for stable, label in zip(decoded.stables, decoded.labels):
                     kind = _KIND.get(label)
                     if not kind:
@@ -488,7 +553,6 @@ class Engine:
                     pair = (stable, obs)
                     if weight >= best.get(pair, float("-inf")):
                         best[pair] = weight
-                    coverage[stable].add(obs)
                     kind_of[stable] = kind
                     example.setdefault(stable, list(reversed(decoded.stables)))
         scores: dict[str, float] = defaultdict(float)
@@ -627,9 +691,18 @@ class Engine:
         }
 
     def evidence(self, *, k: int = 100, as_of: int = WORM_START + 360) -> dict[str, Any]:
-        cached = self._evidence_cache.get((k, as_of))
+        key = (k, as_of)
+        cached = self._evidence_cache.get(key)
         if cached is not None:
-            return cached
+            return copy.deepcopy(cached)
+        with self._lock_for(("evidence", k, as_of)):
+            cached = self._evidence_cache.get(key)
+            if cached is not None:
+                return copy.deepcopy(cached)
+            return self._evidence_compute(k=k, as_of=as_of)
+
+    def _evidence_compute(self, *, k: int, as_of: int) -> dict[str, Any]:
+        key = (k, as_of)
         unmeasured = {
             "precision_at_10": None,
             "precision_at_50": None,
@@ -648,7 +721,6 @@ class Engine:
             )
         )
         seeds = sorted(self.catalog.seed_pids)
-        key = (k, as_of)
         if not seeds or not self.catalog.validation_pids:
             body = {
                 "cypher": cypher,
@@ -662,7 +734,7 @@ class Engine:
                 "stats": {"measured": False, "ioc_set_loaded": False},
             }
             self._evidence_cache[key] = body
-            return body
+            return copy.deepcopy(body)
         trust = self.forecast(
             seeds=seeds, as_of=as_of, k=k, topology="trust", max_hops=3, limit=k
         )
@@ -682,7 +754,7 @@ class Engine:
                 "stats": {"measured": False, "ioc_set_loaded": True},
             }
             self._evidence_cache[key] = body
-            return body
+            return copy.deepcopy(body)
         truth = self.catalog.validation_pids
 
         def precision(preds: list[dict[str, Any]], kk: int) -> float:
@@ -734,7 +806,7 @@ class Engine:
             },
         }
         self._evidence_cache[key] = body
-        return body
+        return copy.deepcopy(body)
 
     def timeline(self) -> dict[str, Any]:
         cypher = (
@@ -812,15 +884,23 @@ class Engine:
         eco = seed.split(":", 1)[0] if ":" in seed else "npm"
         if vid and "@" in vid:
             version = vid.rsplit("@", 1)[-1]
-        sid = next(
-            (rec.stable for rec in self.catalog.by_stable.values() if rec.label == "Service"),
-            "svc:mattermost",
-        )
+        services = [rec.stable for rec in self.catalog.by_stable.values() if rec.label == "Service"]
+        sid = "svc:mattermost" if "svc:mattermost" in self.catalog.by_stable else next(iter(services), "svc:mattermost")
+        pin_vids = {
+            p["dst_vid"] for p in self.catalog.pins if p.get("sid") == sid and p.get("dst_vid")
+        }
+        finding_vids = [
+            {"vid": row["vid"], "at": row["first_seen_utc"]}
+            for row in self.catalog.ioc_records
+            if row.get("vid") in pin_vids and row.get("first_seen_utc") is not None
+        ]
+        finding_vids.sort(key=lambda row: (row["at"], row["vid"]))
         return {
             "cypher": "// catalog lookup, not a traversal",
             "default_blast": {"ecosystem": eco, "name": name, "version": version},
             "default_sid": sid,
             "seed_pids": sorted(self.catalog.seed_pids),
+            "finding_vids": finding_vids,
         }
 
 

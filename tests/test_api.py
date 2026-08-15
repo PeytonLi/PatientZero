@@ -87,3 +87,62 @@ def test_forecast_dependency_is_negative_control(client: TestClient) -> None:
     assert body["stats"]["precision_at_k"] is None
     assert "DEPENDS_ON" in body["cypher"]
     assert "MAINTAINS" not in body["cypher"]
+
+
+def test_health_and_static_index(client: TestClient) -> None:
+    health = _assert_envelope(client.get("/api/health").json())
+    assert health["ok"] is True
+    assert "hydradb_connected" in health
+    assert isinstance(health["catalog_nodes"], int)
+    assert health["catalog_nodes"] >= 1
+    page = client.get("/")
+    assert page.status_code == 200
+    assert b"Patient" in page.content
+
+
+def test_invalid_forecast_params_are_422(client: TestClient) -> None:
+    assert client.post("/api/forecast", json={"topology": "social"}).status_code == 422
+    assert client.post("/api/forecast", json={"k": 0}).status_code == 422
+    assert client.post("/api/forecast", json={"max_hops": 0}).status_code == 422
+
+
+def test_all_envelopes_json_serialize(client: TestClient) -> None:
+    import json
+
+    for path in POST_ROUTES:
+        json.dumps(client.post(path, json={}).json())
+    for path in GET_ROUTES + ("/api/health",):
+        json.dumps(client.get(path).json())
+
+
+def test_meta_exposes_seed_pids_and_blast_with_a_version(client: TestClient) -> None:
+    body = _assert_envelope(client.get("/api/meta").json())
+    assert body["seed_pids"] == ["npm:@tanstack/react-query"]
+    assert body["default_blast"]["name"] == "@tanstack/react-query"
+    assert body["default_blast"]["version"] == "5.101.4"
+    assert body["default_sid"] == "svc:app"
+    assert body["finding_vids"] == []
+
+
+def test_timeline_includes_ioc_nodes(client: TestClient) -> None:
+    body = _assert_envelope(client.get("/api/timeline").json())
+    ids = {n["id"] for n in body["nodes"]}
+    assert "npm:@tanstack/react-query" in ids
+
+
+def test_omitted_seeds_use_catalog_but_explicit_empty_does_not(client: TestClient) -> None:
+    omitted = _assert_envelope(client.post("/api/forecast", json={"topology": "trust"}).json())
+    assert omitted["stats"]["seeds"] == 1
+    empty = _assert_envelope(
+        client.post("/api/forecast", json={"seeds": [], "topology": "trust"}).json()
+    )
+    assert empty["stats"]["seeds"] == 0
+    assert empty["predictions"] == []
+
+
+def test_leverage_exposes_packages_at_risk_not_lockfile_services(client: TestClient) -> None:
+    body = _assert_envelope(client.get("/api/leverage").json())
+    assert "mincut" in body
+    assert body["stats"]["cover"] == "greedy"
+    for row in body["ranked"]:
+        assert "packages_at_risk" in row

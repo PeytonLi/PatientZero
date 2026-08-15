@@ -22,3 +22,16 @@ def test_ss_paths_binds_integer_sourceNode_not_vid_property():
     assert "relTypes: ['DEPENDS_ON', 'PINS']" in query
     assert "relDirection: 'incoming'" in query
     assert "CALL algo.SSpaths" in query
+
+
+def test_ss_paths_rejects_zero_path_count():
+    import pytest
+
+    with pytest.raises(ValueError, match="pathCount"):
+        ss_paths(
+            rel_types=["MAINTAINS"],
+            direction="both",
+            max_len=3,
+            path_count=0,
+            result_limit=10,
+        )

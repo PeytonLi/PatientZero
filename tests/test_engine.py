@@ -517,3 +517,263 @@ def test_meta_default_blast_skips_seed_without_a_parquet_version():
     assert blast["name"] == "@tanstack/react-query"
     assert blast["version"] == "5.101.4"
     assert blast["ecosystem"] == "npm"
+
+
+def test_meta_finding_vids_are_service_pins_in_the_ioc():
+    tables = deepcopy(TABLES)
+    ioc = [
+        {
+            "pid": "npm:@tanstack/react-query",
+            "vid": "npm:@tanstack/react-query@5.101.4",
+            "split": "seed",
+            "first_seen_utc": WORM,
+        },
+        {
+            "pid": "npm:lodash",
+            "vid": "npm:lodash@4.17.21",
+            "split": "validation",
+            "first_seen_utc": WORM + 2000,
+        },
+    ]
+    cat = Catalog.from_tables(tables, ioc_records=ioc)
+    meta = Engine(catalog=cat, run_paths=lambda q, p: []).meta()
+    assert meta["default_sid"] == "svc:app"
+    assert meta["finding_vids"] == [{"vid": "npm:lodash@4.17.21", "at": WORM + 2000}]
+
+
+def test_meta_prefers_mattermost_when_that_service_exists():
+    tables = deepcopy(TABLES)
+    tables["services"] = [
+        {"sid": "svc:appwrite", "name": "appwrite", "source_repo": "github:appwrite/appwrite"},
+        {"sid": "svc:mattermost", "name": "mattermost", "source_repo": "github:mattermost/mattermost"},
+    ]
+    cat = Catalog.from_tables(tables, ioc_records=IOC)
+    assert Engine(catalog=cat, run_paths=lambda q, p: []).meta()["default_sid"] == "svc:mattermost"
+
+
+def test_forecast_explicit_empty_seeds_does_not_fall_back_to_catalog():
+    """UI sends [] before 19:26. That must not fan out the 42 IOC seeds."""
+    calls = {"n": 0}
+
+    def run(cypher: str, params: dict):
+        calls["n"] += 1
+        return []
+
+    cat = Catalog.from_tables(TABLES, ioc_records=IOC)
+    engine = Engine(catalog=cat, run_paths=run)
+    body = engine.forecast(seeds=[], as_of=WORM + 360, k=10, topology="trust", max_hops=3, limit=50)
+    assert body["predictions"] == []
+    assert body["stats"]["seeds"] == 0
+    assert calls["n"] == 0
+
+
+def test_forecast_none_seeds_uses_catalog_seed_pids():
+    calls: list[int] = []
+
+    def run(cypher: str, params: dict):
+        calls.append(params["sourceNode"])
+        return []
+
+    cat = Catalog.from_tables(TABLES, ioc_records=IOC)
+    engine = Engine(catalog=cat, run_paths=run)
+    body = engine.forecast(seeds=None, as_of=WORM + 360, k=10, topology="trust", max_hops=3, limit=50)
+    assert body["stats"]["seeds"] == 1
+    assert calls == [hydra_id("npm:@tanstack/react-query")]
+
+
+def test_index_case_explicit_empty_observed_does_not_query():
+    calls = {"n": 0}
+    cat = Catalog.from_tables(TABLES, ioc_records=IOC)
+    engine = Engine(catalog=cat, run_paths=lambda q, p: calls.__setitem__("n", calls["n"] + 1) or [])
+    body = engine.index_case(observed=[], as_of=WORM + 360, k=5, max_hops=4, limit=50)
+    assert body["candidates"] == []
+    assert body["stats"]["observed"] == 0
+    assert calls["n"] == 0
+
+
+def test_index_case_repeat_hits_cache():
+    cat = Catalog.from_tables(TABLES, ioc_records=IOC)
+    observed = "npm:@tanstack/react-query"
+    mid = "npm:tannerlinsley"
+    path = FakePath(
+        [_node(observed, "Package"), _node(mid, "Maintainer")],
+        [FakeRel("MAINTAINS")],
+    )
+    calls = {"n": 0}
+
+    def run(cypher: str, params: dict):
+        calls["n"] += 1
+        return [path] if params["sourceNode"] == hydra_id(observed) else []
+
+    engine = Engine(catalog=cat, run_paths=run)
+    kwargs = dict(observed=[observed], as_of=WORM + 360, k=5, max_hops=4, limit=50)
+    first = engine.index_case(**kwargs)
+    second = engine.index_case(**kwargs)
+    assert first["candidates"][0]["id"] == mid
+    assert second["candidates"] == first["candidates"]
+    assert calls["n"] == 1
+
+
+def test_forecast_cache_return_is_a_copy():
+    cat = Catalog.from_tables(TABLES, ioc_records=IOC)
+    engine = Engine(catalog=cat, run_paths=lambda q, p: [])
+    first = engine.forecast(seeds=["npm:@tanstack/react-query"], as_of=WORM + 360, k=10, topology="trust", max_hops=3, limit=50)
+    first["stub"] = True
+    first["predictions"].append({"pid": "injected"})
+    second = engine.forecast(seeds=["npm:@tanstack/react-query"], as_of=WORM + 360, k=10, topology="trust", max_hops=3, limit=50)
+    assert "stub" not in second
+    assert second["predictions"] == []
+
+
+def test_sspaths_exception_returns_empty_predictions():
+    cat = Catalog.from_tables(TABLES, ioc_records=IOC)
+
+    def boom(cypher: str, params: dict):
+        raise RuntimeError("bolt down")
+
+    engine = Engine(catalog=cat, run_paths=boom)
+    body = engine.forecast(
+        seeds=["npm:@tanstack/react-query"],
+        as_of=WORM + 360,
+        k=10,
+        topology="trust",
+        max_hops=3,
+        limit=50,
+    )
+    assert body["predictions"] == []
+
+
+def test_forecast_same_key_single_flights_across_threads():
+    import threading
+    import time
+
+    cat = Catalog.from_tables(TABLES, ioc_records=IOC)
+    entered = threading.Event()
+    release = threading.Event()
+    calls = {"n": 0}
+
+    def run(cypher: str, params: dict):
+        calls["n"] += 1
+        entered.set()
+        assert release.wait(timeout=2)
+        return []
+
+    engine = Engine(catalog=cat, run_paths=run)
+    kwargs = dict(
+        seeds=["npm:@tanstack/react-query"],
+        as_of=WORM + 360,
+        k=10,
+        topology="trust",
+        max_hops=3,
+        limit=50,
+    )
+    results: list[dict] = []
+
+    def call():
+        results.append(engine.forecast(**kwargs))
+
+    first = threading.Thread(target=call)
+    second = threading.Thread(target=call)
+    first.start()
+    assert entered.wait(timeout=2)
+    second.start()
+    time.sleep(0.1)
+    assert calls["n"] == 1
+    release.set()
+    first.join(timeout=2)
+    second.join(timeout=2)
+    assert first.is_alive() is False
+    assert second.is_alive() is False
+    assert calls["n"] == 1
+    assert len(results) == 2
+    assert results[0]["predictions"] == results[1]["predictions"] == []
+
+
+def test_forecast_two_sources_merge_in_source_order():
+    seed_a = "npm:seed-a"
+    seed_b = "npm:seed-b"
+    cand_a = "npm:cand-a"
+    cand_b = "npm:cand-b"
+    mid = "npm:shared"
+    tables = deepcopy(TABLES)
+    tables["packages"] = [_pkg(seed_a), _pkg(seed_b), _pkg(cand_a), _pkg(cand_b)]
+    tables["maintainers"] = [_maint(mid)]
+    tables["edges_maintains"] = [
+        {"mid": mid, "pid": seed_a},
+        {"mid": mid, "pid": seed_b},
+        {"mid": mid, "pid": cand_a},
+        {"mid": mid, "pid": cand_b},
+    ]
+    cat = Catalog.from_tables(
+        tables,
+        ioc_records=[
+            {"pid": seed_a, "split": "seed", "first_seen_utc": WORM},
+            {"pid": seed_b, "split": "seed", "first_seen_utc": WORM},
+        ],
+    )
+
+    def run(cypher: str, params: dict):
+        src = params["sourceNode"]
+        if src == hydra_id(seed_a):
+            return [
+                FakePath(
+                    [_node(seed_a, "Package"), _node(mid, "Maintainer"), _node(cand_a, "Package")],
+                    [FakeRel("MAINTAINS"), FakeRel("MAINTAINS")],
+                )
+            ]
+        if src == hydra_id(seed_b):
+            return [
+                FakePath(
+                    [_node(seed_b, "Package"), _node(mid, "Maintainer"), _node(cand_b, "Package")],
+                    [FakeRel("MAINTAINS"), FakeRel("MAINTAINS")],
+                )
+            ]
+        return []
+
+    engine = Engine(catalog=cat, run_paths=run)
+    body = engine.forecast(
+        seeds=[seed_a, seed_b],
+        as_of=WORM + 360,
+        k=10,
+        topology="trust",
+        max_hops=3,
+        limit=50,
+    )
+    ranked = [row["pid"] for row in body["predictions"]]
+    assert ranked == [cand_a, cand_b]
+
+
+def test_index_case_same_key_single_flights_across_threads():
+    import threading
+    import time
+
+    cat = Catalog.from_tables(TABLES, ioc_records=IOC)
+    entered = threading.Event()
+    release = threading.Event()
+    calls = {"n": 0}
+
+    def run(cypher: str, params: dict):
+        calls["n"] += 1
+        entered.set()
+        assert release.wait(timeout=2)
+        return []
+
+    engine = Engine(catalog=cat, run_paths=run)
+    kwargs = dict(observed=["npm:@tanstack/react-query"], as_of=WORM + 360, k=5, max_hops=4, limit=50)
+    results: list[dict] = []
+
+    def call():
+        results.append(engine.index_case(**kwargs))
+
+    first = threading.Thread(target=call)
+    second = threading.Thread(target=call)
+    first.start()
+    assert entered.wait(timeout=2)
+    second.start()
+    time.sleep(0.1)
+    assert calls["n"] == 1
+    release.set()
+    first.join(timeout=2)
+    second.join(timeout=2)
+    assert calls["n"] == 1
+    assert len(results) == 2
