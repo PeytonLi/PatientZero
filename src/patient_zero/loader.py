@@ -23,10 +23,12 @@ from patient_zero.cypher import (
     Q_MATCH_CREATE,
     Q_MATCH_CREATE_BITEMPORAL,
     Q_MERGE_NODES,
+    Q_PACKAGE_EXISTS,
     q_create_rel,
     q_merge_nodes,
 )
 from patient_zero.emit import GRAPH_FILES
+from patient_zero.paths import LOAD_SENTINEL_PID
 
 __all__ = [
     "MAX_UNWIND_BATCH",
@@ -40,7 +42,10 @@ __all__ = [
     "create_inline",
     "load_from_dir",
     "load_graph",
+    "load_plan",
     "merge_version_nodes",
+    "package_exists",
+    "read_checkpoint",
 ]
 
 NODE_SPECS: tuple[tuple[str, str, str], ...] = (
@@ -63,6 +68,42 @@ EDGE_SPECS: tuple[tuple[str, str, str, str, str, str, bool], ...] = (
     ("edges_has_workflow", "Repo", "rid", "HAS_WORKFLOW", "Workflow", "wid", False),
     ("edges_publishes_via_oidc", "Workflow", "wid", "PUBLISHES_VIA_OIDC", "Package", "pid", False),
 )
+
+
+def read_checkpoint(path: Path | None) -> dict[str, Any] | None:
+    if path is None or not path.is_file():
+        return None
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    return payload if isinstance(payload, dict) else None
+
+
+def load_plan(*, sentinel_exists: bool, checkpoint: dict[str, Any] | None) -> str:
+    """Decide whether a load would duplicate CREATE edges.
+
+    skip   — graph already has the sentinel; do not CREATE again
+    resume — sentinel is present and a partial checkpoint exists
+    reset  — sentinel missing (empty or wiped volume); drop stale checkpoint
+    """
+    if sentinel_exists:
+        if checkpoint is None or checkpoint.get("status") == "complete":
+            return "skip"
+        return "resume"
+    return "reset"
+
+
+def package_exists(session: Any, hid: int) -> bool:
+    result = session.run(Q_PACKAGE_EXISTS, id=hid)
+    single = getattr(result, "single", None)
+    record = single() if callable(single) else None
+    return record is not None
+
+
+def _write_checkpoint(path: Path, done: set[str], status: str) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(
+        json.dumps({"done": sorted(done), "status": status}, indent=2) + "\n",
+        encoding="utf-8",
+    )
 
 
 def batches(rows: Sequence[Any], size: int) -> Iterable[list[Any]]:
@@ -124,23 +165,19 @@ def load_graph(
     *,
     batch_size: int = PRELIMINARY_BATCH_SIZE,
     checkpoint_path: Path | None = None,
-) -> dict[str, int]:
+) -> dict[str, Any]:
     if batch_size > MAX_UNWIND_BATCH or batch_size < 1:
         raise ValueError(f"batch_size must be 1..{MAX_UNWIND_BATCH}")
     done: set[str] = set()
-    if checkpoint_path is not None and checkpoint_path.is_file():
-        payload = json.loads(checkpoint_path.read_text(encoding="utf-8"))
-        done = set(payload.get("done") or [])
+    prior = read_checkpoint(checkpoint_path)
+    if prior is not None:
+        done = set(prior.get("done") or [])
 
     def mark(key: str) -> None:
         done.add(key)
         if checkpoint_path is None:
             return
-        checkpoint_path.parent.mkdir(parents=True, exist_ok=True)
-        checkpoint_path.write_text(
-            json.dumps({"done": sorted(done)}, indent=2) + "\n",
-            encoding="utf-8",
-        )
+        _write_checkpoint(checkpoint_path, done, "in_progress")
 
     nodes = 0
     edges = 0
@@ -200,7 +237,15 @@ def load_graph(
             _run(session, query, chunk)
             edges += len(chunk)
             mark(key)
-    return {"nodes": nodes, "edges": edges, "batch_size": batch_size}
+    if checkpoint_path is not None:
+        _write_checkpoint(checkpoint_path, done, "complete")
+    return {
+        "nodes": nodes,
+        "edges": edges,
+        "batch_size": batch_size,
+        "sentinel": LOAD_SENTINEL_PID,
+        "status": "complete",
+    }
 
 
 def read_graph_dir(graph_dir: Path) -> dict[str, list[dict[str, Any]]]:
@@ -221,7 +266,7 @@ def load_from_dir(
     *,
     batch_size: int = PRELIMINARY_BATCH_SIZE,
     checkpoint_path: Path | None = None,
-) -> dict[str, int]:
+) -> dict[str, Any]:
     return load_graph(
         session,
         read_graph_dir(graph_dir),

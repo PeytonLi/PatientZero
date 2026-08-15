@@ -212,10 +212,11 @@ class Engine:
         ioc_path: Path | None = None,
         run_paths: RunPaths | None = None,
     ) -> Engine:
-        root = Path(__file__).resolve().parents[2]
+        from .paths import graph_dir as default_graph_dir, ioc_path as default_ioc_path
+
         catalog = Catalog.from_dir(
-            graph_dir or root / "data" / "graph",
-            ioc_path or root / "artifacts" / "ioc.json",
+            graph_dir or default_graph_dir(),
+            ioc_path or default_ioc_path(),
         )
         return cls(catalog, run_paths=run_paths or _bolt_run_once)
 

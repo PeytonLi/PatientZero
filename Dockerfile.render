@@ -1,0 +1,28 @@
+# HydraDB graph-node + Patient Zero API in one image (Render web service).
+FROM ghcr.io/hydra-db/hydradb:latest
+
+USER root
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    python3 python3-pip python3-venv \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+ENV PYTHONUNBUFFERED=1 \
+    PATIENT_ZERO_ROOT=/app \
+    PATIENT_ZERO_HOST=0.0.0.0 \
+    PATH="/opt/pz/bin:${PATH}"
+
+COPY pyproject.toml README.md LICENSE ./
+COPY src ./src
+COPY artifacts ./artifacts
+COPY data/graph ./data/graph
+COPY scripts ./scripts
+COPY deploy/render-entrypoint.sh /render-entrypoint.sh
+
+RUN python3 -m venv /opt/pz \
+    && /opt/pz/bin/pip install --no-cache-dir --upgrade pip \
+    && /opt/pz/bin/pip install --no-cache-dir . \
+    && chmod +x /render-entrypoint.sh
+
+EXPOSE 10000
+ENTRYPOINT ["/render-entrypoint.sh"]

@@ -15,8 +15,10 @@
   var MARK_NAMED = 180; // 19:26
   var MARK_WORLD = 480; // 19:46
   var DEBOUNCE_MS = 150;
-  var BANNER_COPY =
-    "These panels are synthetic; no number here is a measurement.";
+    var BANNER_COPY =
+      "These panels are synthetic; no number here is a measurement.";
+    var DEGRADED_COPY =
+      "API is up but HydraDB is not ready. Panels will be empty until the graph loads.";
 
   var windowStart = PZ.WORM_START;
   var windowEnd = PZ.T_END;
@@ -158,15 +160,35 @@
     }
     var banner = $("banner");
     var text = $("banner-text");
+    var tag = $("banner-tag");
     if (anyStub) {
       bannerLocked = true;
-      if (banner) banner.hidden = false;
-      if (text && !text.textContent) text.textContent = BANNER_COPY;
+      if (banner) {
+        banner.hidden = false;
+        banner.classList.remove("is-degraded");
+      }
+      if (tag) tag.textContent = "SYNTHETIC";
+      if (text) text.textContent = BANNER_COPY;
       document.body.classList.add("is-stub");
+      document.body.classList.remove("is-degraded");
     } else {
       bannerLocked = false;
-      if (banner) banner.hidden = true;
       document.body.classList.remove("is-stub");
+      if (PZ.mode === "degraded") {
+        if (banner) {
+          banner.hidden = false;
+          banner.classList.add("is-degraded");
+        }
+        if (tag) tag.textContent = "DEGRADED";
+        if (text) text.textContent = DEGRADED_COPY;
+        document.body.classList.add("is-degraded");
+      } else {
+        if (banner) {
+          banner.hidden = true;
+          banner.classList.remove("is-degraded");
+        }
+        document.body.classList.remove("is-degraded");
+      }
     }
   }
 
@@ -702,12 +724,17 @@
   function setApiMode() {
     var node = $("api-mode");
     if (!node) return;
+    node.classList.remove("is-live", "is-degraded");
+    var health = PZ.health || {};
+    var n = typeof health.catalog_nodes === "number" ? health.catalog_nodes : null;
     if (PZ.mode === "live") {
-      node.textContent = PZ.base ? "API " + PZ.base.replace(/^https?:\/\//, "") : "API live";
+      node.textContent = n ? "LIVE · " + n.toLocaleString() + " nodes" : "LIVE";
       node.classList.add("is-live");
+    } else if (PZ.mode === "degraded") {
+      node.textContent = "DEGRADED";
+      node.classList.add("is-degraded");
     } else {
       node.textContent = "MOCK";
-      node.classList.remove("is-live");
     }
   }
 
@@ -835,24 +862,74 @@
     });
   }
 
+  var playTimer = 0;
+  var playing = false;
+  var PLAY_STOPS = [0, MARK_NAMED, MARK_WORLD];
+
+  function stopPlay() {
+    playing = false;
+    clearTimeout(playTimer);
+    var btn = $("play-clock");
+    if (btn) {
+      btn.textContent = "Play 19:20 → 19:46";
+      btn.setAttribute("aria-pressed", "false");
+    }
+  }
+
+  function togglePlay() {
+    if (playing) {
+      stopPlay();
+      return;
+    }
+    playing = true;
+    var btn = $("play-clock");
+    if (btn) {
+      btn.textContent = "Stop";
+      btn.setAttribute("aria-pressed", "true");
+    }
+    var i = 0;
+    function step() {
+      if (!playing) return;
+      if (i >= PLAY_STOPS.length) {
+        stopPlay();
+        return;
+      }
+      var scrub = $("scrub");
+      scrub.value = String(PLAY_STOPS[i]);
+      onScrubInput();
+      i += 1;
+      playTimer = setTimeout(step, 1600);
+    }
+    step();
+  }
+
   function init() {
     buildScrubMarks();
     bindForecastToggle();
+    var playBtn = $("play-clock");
+    if (playBtn) playBtn.addEventListener("click", togglePlay);
 
     var scrub = $("scrub");
     scrub.addEventListener("input", onScrubInput);
     scrub.addEventListener("change", onScrubInput);
 
     document.addEventListener("keydown", function (e) {
-      if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return;
+      if (e.key !== "ArrowLeft" && e.key !== "ArrowRight" && e.key !== " ") return;
       var tag = (e.target && e.target.tagName) || "";
       if (tag === "INPUT" && e.target.type === "text") return;
       if (tag === "TEXTAREA") return;
+      if (e.key === " ") {
+        if (tag === "BUTTON" || tag === "INPUT") return;
+        e.preventDefault();
+        togglePlay();
+        return;
+      }
       e.preventDefault();
       stepScrub(e.key === "ArrowRight" ? 1 : -1, e.shiftKey);
     });
     PZ.probeLive().then(function () {
       setApiMode();
+      noteStub(PZ.mode === "mock" ? [{ stub: true }] : []);
       return Promise.all([PZ.fetchApi("/api/timeline"), PZ.fetchApi("/api/meta")]);
     }).then(function (pair) {
       var tl = pair[0];

@@ -93,11 +93,20 @@ def test_health_and_static_index(client: TestClient) -> None:
     health = _assert_envelope(client.get("/api/health").json())
     assert health["ok"] is True
     assert "hydradb_connected" in health
+    assert "graph_loaded" in health
+    assert "ready" in health
+    assert health["mode"] in ("live", "degraded")
     assert isinstance(health["catalog_nodes"], int)
     assert health["catalog_nodes"] >= 1
+    # Unit tests do not start HydraDB; the API must still answer and not
+    # claim to be a live loaded graph.
+    if not health["hydradb_connected"]:
+        assert health["ready"] is False
+        assert health["mode"] == "degraded"
     page = client.get("/")
     assert page.status_code == 200
     assert b"Patient" in page.content
+    assert b"play-clock" in page.content
 
 
 def test_invalid_forecast_params_are_422(client: TestClient) -> None:

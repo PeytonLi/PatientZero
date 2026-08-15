@@ -1,0 +1,61 @@
+{
+  "files": {
+    "packages.parquet": {
+      "rows": 5919,
+      "bytes": 143362
+    },
+    "versions.parquet": {
+      "rows": 8775,
+      "bytes": 273032
+    },
+    "maintainers.parquet": {
+      "rows": 72,
+      "bytes": 3289
+    },
+    "repos.parquet": {
+      "rows": 30,
+      "bytes": 2553
+    },
+    "workflows.parquet": {
+      "rows": 88,
+      "bytes": 5225
+    },
+    "services.parquet": {
+      "rows": 24,
+      "bytes": 1891
+    },
+    "advisories.parquet": {
+      "rows": 1,
+      "bytes": 998
+    },
+    "edges_depends_on.parquet": {
+      "rows": 4025,
+      "bytes": 68937
+    },
+    "edges_pins.parquet": {
+      "rows": 17478,
+      "bytes": 131155
+    },
+    "edges_maintains.parquet": {
+      "rows": 4023,
+      "bytes": 15583
+    },
+    "edges_published_from.parquet": {
+      "rows": 150,
+      "bytes": 3379
+    },
+    "edges_has_workflow.parquet": {
+      "rows": 88,
+      "bytes": 2965
+    },
+    "edges_publishes_via_oidc.parquet": {
+      "rows": 106,
+      "bytes": 2248
+    },
+    "edges_affects.parquet": {
+      "rows": 84,
+      "bytes": 1864
+    }
+  },
+  "elements": 40863
+}

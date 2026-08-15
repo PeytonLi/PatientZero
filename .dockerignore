@@ -1,0 +1,17 @@
+.venv
+.pytest_cache
+.git
+.github
+hydradb-data
+runs
+**/__pycache__
+**/*.pyc
+**/*.egg-info
+data/depsdev
+data/enrich
+data/lockfiles
+data/npm-search
+data/truth
+data/workflows
+docs
+tests

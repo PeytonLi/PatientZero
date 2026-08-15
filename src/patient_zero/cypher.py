@@ -44,8 +44,10 @@ Q_TRAVERSE_3HOP = (
 
 # Health / connectivity. MEASURED.md: row execution supports MATCH ... RETURN;
 # RETURN currently supports <binding>.<property> or count(*). Bare `RETURN 1`
-# is not in the accepted set.
+# is not in the accepted set. Do not use the Version count(*) scan as a
+# liveness check — it grows with the graph. Point-lookup the demo sentinel.
 Q_HEALTH = "MATCH (a:Version) RETURN count(*) AS c"
+Q_PACKAGE_EXISTS = "MATCH (a:Package {id: $id}) RETURN a.id AS id"
 
 # HydraDB 0.1.0 admission control rejects UNWIND batches > 1024.
 # 1000 is the largest round size that actually runs (measured D0-1).

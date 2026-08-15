@@ -3,8 +3,9 @@
  *
  * Default is mock so file:// and a static folder work with no server.
  * If window.PZ_API is set, or a health ping to :8080 / same-origin succeeds,
- * fetchApi talks to the live stub (api.py). Shapes match that module:
- * every body has cypher, latency_ms, stub.
+ * fetchApi talks to the live API. Health JSON `ready` distinguishes LIVE
+ * from DEGRADED (API up, HydraDB missing or unloaded). Mock is only used
+ * when no API answers.
  *
  * Precision@K and R0 stay null. Forecast scores are mock propagation, not precision.
  */
@@ -633,19 +634,17 @@
     if (probed) return Promise.resolve(liveBase);
     if (probePromise) return probePromise;
     probePromise = (function () {
+      var candidates;
       if (typeof global.PZ_API === "string" && global.PZ_API.length) {
-        liveBase = global.PZ_API.replace(/\/$/, "");
-        probed = true;
-        PZ.mode = "live";
-        PZ.base = liveBase;
-        return Promise.resolve(liveBase);
+        candidates = [global.PZ_API.replace(/\/$/, "")];
+      } else {
+        candidates = ["", LIVE_DEFAULT];
       }
       if (!nativeFetch) {
         probed = true;
         PZ.mode = "mock";
         return Promise.resolve(null);
       }
-      var candidates = ["", LIVE_DEFAULT];
       var i = 0;
       function next() {
         if (i >= candidates.length) {
@@ -660,14 +659,18 @@
         return nativeFetch(base + "/api/health", { signal: to.signal })
           .then(function (r) {
             to.clear();
-            if (r.ok) {
+            if (!r.ok) return next();
+            return r.json().then(function (body) {
+              if (!body || typeof body.hydradb_connected === "undefined") {
+                return next();
+              }
               liveBase = base || (global.location && global.location.origin ? global.location.origin : LIVE_DEFAULT);
               probed = true;
-              PZ.mode = "live";
+              PZ.health = body;
+              PZ.mode = body.ready ? "live" : "degraded";
               PZ.base = liveBase;
               return liveBase;
-            }
-            return next();
+            });
           })
           .catch(function () {
             to.clear();
@@ -720,7 +723,8 @@
     mockHandle: mockHandle,
     probeLive: probeLive,
     mode: "mock",
-    base: null
+    base: null,
+    health: null
   };
 
   global.PZ = PZ;

@@ -12,13 +12,15 @@ from pathlib import Path
 
 from neo4j import GraphDatabase, basic_auth
 
-from .cypher import Q_HEALTH
+from .cypher import Q_PACKAGE_EXISTS
+from .ids import hydra_id
+from .paths import LOAD_SENTINEL_PID
 
 log = logging.getLogger("patient_zero.db")
 
 DEFAULT_BOLT_URI = "bolt://127.0.0.1:7687"
 DEFAULT_TOKEN = "local-development-token-32-bytes"
-HEALTH_CYPHER = Q_HEALTH
+HEALTH_CYPHER = Q_PACKAGE_EXISTS
 _CONNECT_TIMEOUT_S = 2.0
 
 
@@ -40,7 +42,14 @@ def _token() -> str:
 
 
 def _uri() -> str:
-    return os.environ.get("HYDRADB_BOLT_URI", DEFAULT_BOLT_URI)
+    explicit = os.environ.get("HYDRADB_BOLT_URI")
+    if explicit:
+        return explicit
+    host = os.environ.get("HYDRADB_BOLT_HOST")
+    if host:
+        port = os.environ.get("HYDRADB_BOLT_PORT", "7687")
+        return f"bolt://{host}:{port}"
+    return DEFAULT_BOLT_URI
 
 
 def bolt_driver(*, timeout: float = 10.0):
@@ -72,4 +81,24 @@ def ping(uri: str | None = None) -> bool:
             return True
     except Exception as exc:
         log.info("HydraDB ping failed (%s)", type(exc).__name__)
+        return False
+
+
+def graph_loaded(uri: str | None = None) -> bool:
+    """True iff the demo sentinel Package node is present. Never raises."""
+    try:
+        with GraphDatabase.driver(
+            uri or _uri(),
+            auth=basic_auth("neo4j", _token()),
+            connection_timeout=_CONNECT_TIMEOUT_S,
+            connection_acquisition_timeout=_CONNECT_TIMEOUT_S,
+        ) as driver:
+            driver.verify_connectivity()
+            with driver.session() as session:
+                record = session.run(
+                    Q_PACKAGE_EXISTS, id=hydra_id(LOAD_SENTINEL_PID)
+                ).single()
+                return record is not None
+    except Exception as exc:
+        log.info("HydraDB graph probe failed (%s)", type(exc).__name__)
         return False

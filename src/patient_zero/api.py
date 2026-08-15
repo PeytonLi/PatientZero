@@ -21,7 +21,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
-from .db import HEALTH_CYPHER, bolt_driver, ping as hydradb_ping
+from .db import HEALTH_CYPHER, bolt_driver, graph_loaded, ping as hydradb_ping
 from .engine import Engine, SENTINEL_VALID_TO, WORM_START
 
 log = logging.getLogger("patient_zero.api")
@@ -99,8 +99,10 @@ async def lifespan(app: FastAPI):
             created = True
             log.info("API wired to HydraDB; stub=false")
         except Exception:
-            log.exception("HydraDB unavailable; traversals return empty path sets")
-            configure(Engine.live(run_paths=lambda _q, _p: []))
+            log.exception(
+                "HydraDB unavailable at boot; queries retry Bolt per request"
+            )
+            configure(Engine.live())
             created = True
     yield
     if created:
@@ -227,12 +229,19 @@ def meta() -> dict[str, Any]:
 
 @app.get("/api/health")
 def health() -> dict[str, Any]:
+    connected = hydradb_ping()
+    catalog_nodes = len(get_engine().catalog.by_hydra)
+    loaded = graph_loaded() if connected else False
+    ready = connected and loaded and catalog_nodes > 0
     return _timed(
         HEALTH_CYPHER,
         lambda: {
             "ok": True,
-            "hydradb_connected": hydradb_ping(),
-            "catalog_nodes": len(get_engine().catalog.by_hydra),
+            "ready": ready,
+            "hydradb_connected": connected,
+            "graph_loaded": loaded,
+            "catalog_nodes": catalog_nodes,
+            "mode": "live" if ready else "degraded",
         },
     )
 

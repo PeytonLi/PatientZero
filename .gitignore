@@ -1,5 +1,7 @@
 hydradb-data/
-data/
+data/*
+!data/graph/
+!data/graph/**
 __pycache__/
 *.pyc
 .venv/

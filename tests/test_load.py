@@ -1,11 +1,12 @@
 """HydraDB load. Nodes are {id} plus one label; rel maps lead with id. Fake session, no Bolt."""
 
+import json
 from pathlib import Path
 
 from patient_zero.cypher import PRELIMINARY_BATCH_SIZE
 from patient_zero.emit import write_graph
 from patient_zero.ids import hydra_id
-from patient_zero.loader import load_from_dir, load_graph
+from patient_zero.loader import load_from_dir, load_graph, load_plan
 
 
 class FakeSession:
@@ -181,3 +182,24 @@ def test_checkpoint_skips_already_written_batches(tmp_path: Path):
     load_graph(session, tables, batch_size=3, checkpoint_path=checkpoint)
     assert len(session.calls) == first
     assert checkpoint.is_file()
+    payload = json.loads(checkpoint.read_text(encoding="utf-8"))
+    assert payload["status"] == "complete"
+
+
+def test_load_plan_skips_when_sentinel_present_and_complete():
+    assert load_plan(sentinel_exists=True, checkpoint={"status": "complete"}) == "skip"
+
+
+def test_load_plan_skips_when_sentinel_present_without_checkpoint():
+    assert load_plan(sentinel_exists=True, checkpoint=None) == "skip"
+
+
+def test_load_plan_resumes_partial_checkpoint():
+    assert load_plan(
+        sentinel_exists=True, checkpoint={"status": "in_progress", "done": ["nodes:Package:0"]}
+    ) == "resume"
+
+
+def test_load_plan_resets_when_volume_was_wiped():
+    assert load_plan(sentinel_exists=False, checkpoint={"status": "complete"}) == "reset"
+    assert load_plan(sentinel_exists=False, checkpoint=None) == "reset"

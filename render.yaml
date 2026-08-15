@@ -1,0 +1,27 @@
+# Patient Zero on Render: one web service runs HydraDB + the API.
+# HydraDB Bolt stays on localhost. Public HTTP is $PORT (default 10000).
+#
+# Apply: https://dashboard.render.com/blueprints
+# First boot loads ~41k elements (~1–2 min). Later boots skip the load.
+#
+# Plan is standard (2 GB). Starter 512 MB OOMs HydraDB + Python + PyArrow.
+
+services:
+  - type: web
+    name: patient-zero
+    runtime: docker
+    dockerfilePath: ./Dockerfile.render
+    plan: standard
+    region: oregon
+    healthCheckPath: /api/health
+    disk:
+      name: hydradb-data
+      mountPath: /data
+      sizeGB: 5
+    envVars:
+      - key: PYTHONUNBUFFERED
+        value: "1"
+      - key: PATIENT_ZERO_ROOT
+        value: /app
+      - key: HYDRADB_AUTH_TOKEN
+        value: local-development-token-32-bytes

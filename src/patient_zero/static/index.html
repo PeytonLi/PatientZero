@@ -14,7 +14,7 @@
 
 <!-- ============ synthetic-data guard. Never remove. ============ -->
 <div id="banner" class="banner" hidden role="alert" aria-live="assertive">
-  <span class="banner-tag">SYNTHETIC</span>
+  <span class="banner-tag" id="banner-tag">SYNTHETIC</span>
   <span id="banner-text"></span>
 </div>
 
@@ -46,7 +46,10 @@
     <span>Drag the clock. Every panel below re-queries HydraDB at that instant —
       possible because the dependency topology is bitemporal, affordable because reads run at
       <strong>14,554&nbsp;QPS</strong> while writes crawl at <strong>225/sec</strong>.</span>
-    <span class="scrub-keys">← → to step</span>
+    <span class="scrub-actions">
+      <button type="button" id="play-clock" class="play-btn" aria-pressed="false">Play 19:20 → 19:46</button>
+      <span class="scrub-keys">← → to step · space to play</span>
+    </span>
   </div>
 </section>
 

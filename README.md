@@ -105,45 +105,41 @@ UNWIND batches cap at 1024; the loader uses 1000. Query timeout is 30s. One writ
 
 Throughput probes: [`docs/MEASURED.md`](docs/MEASURED.md).
 
-## Setup
+## Try it
 
-Needs Python 3.12+, Docker, and Bolt on `127.0.0.1:7687`.
+**Live demo (Render):** after you apply the Blueprint, the service URL is
+`https://patient-zero.onrender.com` (exact subdomain is shown in the dashboard).
+
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/PeytonLi/PatientZero)
+
+That runs HydraDB and the API in one Standard instance (2 GB, ~$25/mo) with a
+5 GB disk. First boot loads ~41k elements (1–2 min, masthead may read DEGRADED).
+Later boots skip the load. Starter (512 MB) is too small for HydraDB + Python.
+
+### Local Docker
+
+```bash
+docker compose up --build
+```
+
+Open [http://127.0.0.1:8080](http://127.0.0.1:8080). The masthead should read **LIVE** with a node count, not MOCK or DEGRADED. Press **Play 19:20 → 19:46** (or space) to walk the May 11 clock.
+
+If port 7687 is already taken by a local HydraDB container, stop that one first. To wipe the graph and reload: `docker compose down -v && docker compose up --build`.
+
+### Local Python (HydraDB still in Docker)
 
 ```bash
 python -m venv .venv
 # Windows: .\.venv\Scripts\activate
 pip install -e ".[test]"
+docker compose up hydradb -d
+python scripts/load.py          # no-ops if the sentinel package is already present
+python -m patient_zero          # http://127.0.0.1:8080
 ```
 
-HydraDB (Windows: drop `--user`; use an absolute volume path if bind-mount fails):
+Serve from that URL. Opening `src/patient_zero/static/index.html` via `file://` falls back to mock data.
 
-```bash
-docker pull ghcr.io/hydra-db/hydradb:latest
-mkdir -p hydradb-data/store hydradb-data/cache
-printf '%s\n' 'local-development-token-32-bytes' > hydradb-data/auth-token
-docker run --rm \
-  -p 7687:7687 -p 8443:8443 -p 9090:9090 -v "$PWD/hydradb-data:/data" \
-  -e CLOUD_PROVIDER=local -e LOCAL_PATH=/data/store \
-  -e GRAPH_NAMESPACE=default -e GRAPH_ID=default \
-  -e GRAPH_CELL_ID=cell-0 -e GRAPH_CELLS=cell-0 -e GRAPH_NODE_ID=node-0 \
-  -e GRAPH_BOLT_NODE_ADDRESSES=node-0=127.0.0.1:7687 \
-  -e GRAPH_ADVERTISED_BOLT_ADDR=127.0.0.1:7687 \
-  -e GRAPH_DATA_CACHE_DIR=/data/cache -e GRAPH_AUTH_TOKEN_FILE=/data/auth-token \
-  -e GRAPH_ALLOW_PLAINTEXT=true -e RUST_MIN_STACK=33554432 \
-  ghcr.io/hydra-db/hydradb:latest
-```
-
-Graph (Parquet is gitignored under `data/graph/`):
-
-```bash
-python scripts/etl.py --offline          # after caches exist; omit --offline to fetch
-python scripts/load.py                   # CREATE, not upsert
-# Do not re-run load.py without wiping the graph and runs/load-checkpoint.json.
-# A second pass duplicates edges.
-python -m patient_zero                   # http://127.0.0.1:8080  (not :8000)
-```
-
-`file://` on `src/patient_zero/static/` still serves the mock. Live mode talks to `:8080`.
+## Why trust edges
 
 ## Documentation
 

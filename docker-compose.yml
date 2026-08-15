@@ -1,0 +1,53 @@
+# One-command demo. First boot loads ~41k elements into HydraDB (~1 min).
+#   docker compose up --build
+#   open http://127.0.0.1:8080
+#
+# Wipe the graph and reload: docker compose down -v && docker compose up --build
+
+services:
+  hydradb:
+    image: ghcr.io/hydra-db/hydradb:latest
+    environment:
+      CLOUD_PROVIDER: local
+      LOCAL_PATH: /data/store
+      GRAPH_NAMESPACE: default
+      GRAPH_ID: default
+      GRAPH_CELL_ID: cell-0
+      GRAPH_CELLS: cell-0
+      GRAPH_NODE_ID: node-0
+      GRAPH_BOLT_NODE_ADDRESSES: node-0=0.0.0.0:7687
+      GRAPH_ADVERTISED_BOLT_ADDR: 0.0.0.0:7687
+      GRAPH_DATA_CACHE_DIR: /data/cache
+      GRAPH_AUTH_TOKEN_FILE: /data/auth-token
+      GRAPH_ALLOW_PLAINTEXT: "true"
+      RUST_MIN_STACK: "33554432"
+    volumes:
+      - hydradb-store:/data/store
+      - hydradb-cache:/data/cache
+      - ./deploy/auth-token:/data/auth-token:ro
+    ports:
+      - "7687:7687"
+      - "8443:8443"
+      - "9090:9090"
+
+  app:
+    build: .
+    depends_on:
+      - hydradb
+    environment:
+      PATIENT_ZERO_ROOT: /app
+      PATIENT_ZERO_GRAPH_DIR: /app/data/graph
+      PATIENT_ZERO_IOC_PATH: /app/artifacts/ioc.json
+      PATIENT_ZERO_HOST: 0.0.0.0
+      PATIENT_ZERO_PORT: "8080"
+      HYDRADB_BOLT_URI: bolt://hydradb:7687
+      HYDRADB_AUTH_TOKEN: local-development-token-32-bytes
+    volumes:
+      - load-checkpoint:/app/runs
+    ports:
+      - "8080:8080"
+
+volumes:
+  hydradb-store:
+  hydradb-cache:
+  load-checkpoint:
