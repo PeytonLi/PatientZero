@@ -593,6 +593,7 @@
         ],
         window_start: WORM_START,
         window_end: T_END,
+        nodes: GRAPH.nodes,
         stats: { ticks: 5, counts_are_stub: true }
       }, 71);
     }

@@ -46,6 +46,7 @@ class Catalog:
     pins: list[dict[str, Any]]
     ioc_records: list[dict[str, Any]]
     maintainer_degree: dict[str, int]
+    entity_degree: dict[str, int]
 
     @classmethod
     def from_tables(
@@ -77,10 +78,24 @@ class Catalog:
         seed = frozenset(r["pid"] for r in ioc if r.get("split") == "seed")
         validation = frozenset(r["pid"] for r in ioc if r.get("split") == "validation")
         degree: dict[str, int] = {}
+        entity_degree: dict[str, int] = {}
         for edge in tables.get("edges_maintains") or []:
             mid = edge.get("mid")
             if mid:
                 degree[mid] = degree.get(mid, 0) + 1
+                entity_degree[mid] = entity_degree.get(mid, 0) + 1
+        for edge in tables.get("edges_published_from") or []:
+            rid = edge.get("rid")
+            if rid:
+                entity_degree[rid] = entity_degree.get(rid, 0) + 1
+        for edge in tables.get("edges_publishes_via_oidc") or []:
+            wid = edge.get("wid")
+            if wid:
+                entity_degree[wid] = entity_degree.get(wid, 0) + 1
+        for edge in tables.get("edges_has_workflow") or []:
+            wid = edge.get("wid")
+            if wid:
+                entity_degree[wid] = max(entity_degree.get(wid, 0), 1)
         return cls(
             by_hydra=by_hydra,
             by_stable=by_stable,
@@ -90,6 +105,7 @@ class Catalog:
             pins=list(tables.get("edges_pins") or []),
             ioc_records=ioc,
             maintainer_degree=degree,
+            entity_degree=entity_degree,
         )
 
     @classmethod
@@ -126,3 +142,7 @@ class Catalog:
     def first_vid(self, package_id: str) -> str | None:
         versions = self.versions_for_pid.get(package_id) or []
         return versions[0] if versions else None
+
+    def degree(self, stable: str) -> int:
+        """MAINTAINS / PUBLISHED_FROM / OIDC-publish counts. Unknown → 1, never 0."""
+        return max(int(self.entity_degree.get(stable) or 0), 1)

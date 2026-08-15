@@ -9,6 +9,7 @@ server rejects MATCH+CALL and `WHERE all(r IN relationships(path) ...)`.
 from __future__ import annotations
 
 import logging
+import threading
 from collections import defaultdict
 from pathlib import Path
 from typing import Any, Callable
@@ -25,6 +26,9 @@ TRUE_ORIGIN_MID = "npm:tannerlinsley"  # TanStack postmortem; used only to rank,
 
 RunPaths = Callable[[str, dict[str, Any]], list[Any]]
 _KIND = {"Maintainer": "maintainer", "Repo": "repo", "Workflow": "workflow", "Service": "service"}
+_SHARED_LABELS = frozenset({"Maintainer", "Repo", "Workflow"})
+VECTOR_DEFAULT = 1
+VECTOR_TRUST_WORKFLOW = 2  # pull_request_target or OIDC publish; fixed before any live run
 
 
 def _bound(limit: int, k: int | None = None) -> int:
@@ -72,6 +76,88 @@ def _rel_props(rel: Any) -> dict[str, Any]:
         return out
 
 
+def _path_vector(decoded: DecodedPath, catalog: Catalog) -> int:
+    for stable, label in zip(decoded.stables, decoded.labels):
+        if label != "Workflow":
+            continue
+        rec = catalog.rec(stable)
+        row = rec.row if rec else {}
+        if row.get("uses_pull_request_target") or row.get("has_oidc_publish"):
+            return VECTOR_TRUST_WORKFLOW
+    return VECTOR_DEFAULT
+
+
+def _shared_on_path(decoded: DecodedPath) -> tuple[str | None, str]:
+    for stable, label in zip(decoded.stables, decoded.labels):
+        if label in _SHARED_LABELS:
+            return stable, label
+    return None, ""
+
+
+def _path_weight(decoded: DecodedPath, catalog: Catalog) -> float:
+    entity, _label = _shared_on_path(decoded)
+    deg = catalog.degree(entity) if entity else 1
+    return (1.0 / deg) * _path_vector(decoded, catalog)
+
+
+def _forecast_key(
+    topology: str, seed_list: list[str], as_of: int, k: int, max_hops: int, limit: int
+) -> tuple[Any, ...]:
+    return (topology, tuple(seed_list), as_of, k, max_hops, _bound(limit, k))
+
+
+def _mean_validation_hits(
+    reached: dict[str, frozenset[str]], seeds: list[str], truth: frozenset[str]
+) -> float:
+    if not seeds:
+        return 0.0
+    hits = [len(reached.get(seed, frozenset()) & truth) for seed in seeds]
+    return round(sum(hits) / len(hits), 4)
+
+
+def _greedy_cover(
+    covers: dict[str, frozenset[str]],
+    universe: set[str],
+    kinds: dict[str, str],
+) -> tuple[list[dict[str, Any]], float | None]:
+    inverted: dict[str, set[str]] = defaultdict(set)
+    for pid, ents in covers.items():
+        if pid not in universe:
+            continue
+        for entity in ents:
+            inverted[entity].add(pid)
+    remaining = set(universe)
+    picked: list[dict[str, Any]] = []
+    reachable = len(universe)
+    while remaining:
+        best: str | None = None
+        best_got: set[str] = set()
+        for entity, pids in inverted.items():
+            got = pids & remaining
+            if not got:
+                continue
+            if len(got) > len(best_got) or (
+                len(got) == len(best_got) and (best is None or entity < best)
+            ):
+                best = entity
+                best_got = got
+        if best is None:
+            break
+        kind = kinds.get(best, "maintainer")
+        picked.append(
+            {
+                "id": best,
+                "kind": kind,
+                "covers": len(best_got),
+                "action": "revoke" if kind == "maintainer" else "disable",
+            }
+        )
+        remaining -= best_got
+    if not reachable:
+        return picked, None
+    return picked, round((reachable - len(remaining)) / reachable, 4)
+
+
 def _in_window(props: dict[str, Any], as_of: int) -> bool:
     vf = props.get("valid_from")
     vt = props.get("valid_to")
@@ -104,7 +190,13 @@ class Engine:
     def __init__(self, catalog: Catalog, run_paths: RunPaths):
         self.catalog = catalog
         self.run_paths = run_paths
+        self._forecast_lock = threading.Lock()
         self._evidence_cache: dict[tuple[int, int], dict[str, Any]] = {}
+        self._forecast_cache: dict[tuple[Any, ...], dict[str, Any]] = {}
+        self._forecast_reached: dict[tuple[Any, ...], dict[str, frozenset[str]]] = {}
+        self._forecast_covers: dict[tuple[Any, ...], dict[str, frozenset[str]]] = {}
+        self._forecast_entity_kind: dict[tuple[Any, ...], dict[str, str]] = {}
+        self._forecast_entity_path: dict[tuple[Any, ...], dict[str, list[str]]] = {}
 
     @classmethod
     def live(
@@ -220,6 +312,39 @@ class Engine:
         seed_list = list(seeds) or sorted(self.catalog.seed_pids)
         seed_set = set(seed_list)
         trust = topology == "trust"
+        cache_key = _forecast_key(topology, seed_list, as_of, k, max_hops, limit)
+        cached = self._forecast_cache.get(cache_key)
+        if cached is not None:
+            return cached
+        with self._forecast_lock:
+            cached = self._forecast_cache.get(cache_key)
+            if cached is not None:
+                return cached
+            return self._forecast_compute(
+                seed_list=seed_list,
+                seed_set=seed_set,
+                trust=trust,
+                topology=topology,
+                as_of=as_of,
+                k=k,
+                max_hops=max_hops,
+                limit=limit,
+                cache_key=cache_key,
+            )
+
+    def _forecast_compute(
+        self,
+        *,
+        seed_list: list[str],
+        seed_set: set[str],
+        trust: bool,
+        topology: str,
+        as_of: int,
+        k: int,
+        max_hops: int,
+        limit: int,
+        cache_key: tuple[Any, ...],
+    ) -> dict[str, Any]:
         bound = _bound(limit, k)
         if trust:
             cypher = ss_paths(
@@ -244,9 +369,18 @@ class Engine:
                 for pid in seed_list
                 if (vid := self.catalog.first_vid(pid))
             ]
-        support: dict[str, int] = defaultdict(int)
+        scores: dict[str, float] = defaultdict(float)
         example: dict[str, list[str]] = {}
+        best_w: dict[str, float] = {}
+        reached_by_source: dict[str, set[str]] = defaultdict(set)
+        covers: dict[str, set[str]] = defaultdict(set)
+        entity_kind: dict[str, str] = {}
+        entity_path: dict[str, list[str]] = {}
         for src in sources:
+            src_pid = src
+            if not trust:
+                rec = self.catalog.rec(src)
+                src_pid = (rec.row.get("pid") if rec else None) or src
             for raw in self._safe_paths(cypher, src):
                 decoded = self.decode(raw)
                 if decoded is None:
@@ -254,20 +388,30 @@ class Engine:
                 if not trust and not decoded.in_window(as_of):
                     continue
                 cand = self._forecast_candidate(decoded, seed_set, trust)
-                if cand:
-                    support[cand] += 1
-                    example.setdefault(cand, decoded.stables)
-        ranked = sorted(support, key=lambda pid: (-support[pid], pid))[:k]
-        peak = max(support.values(), default=1)
+                if not cand:
+                    continue
+                weight = _path_weight(decoded, self.catalog)
+                scores[cand] += weight
+                if weight >= best_w.get(cand, float("-inf")):
+                    example[cand] = decoded.stables
+                    best_w[cand] = weight
+                reached_by_source[src_pid].add(cand)
+                entity, label = _shared_on_path(decoded)
+                if entity:
+                    covers[cand].add(entity)
+                    entity_kind.setdefault(entity, _KIND.get(label, "maintainer"))
+                    entity_path.setdefault(entity, decoded.stables)
+        ranked = sorted(scores, key=lambda pid: (-scores[pid], pid))[:k]
+        peak = max(scores.values(), default=1.0)
         preds = [
             {
                 "pid": pid,
-                "score": round(support[pid] / peak, 4),
+                "score": round(scores[pid] / peak, 4) if peak else 0.0,
                 "justification_path": example[pid],
             }
             for pid in ranked
         ]
-        return {
+        body = {
             "cypher": cypher,
             "predictions": preds,
             "stats": {
@@ -281,6 +425,14 @@ class Engine:
                 "precision_at_k": None,
             },
         }
+        self._forecast_cache[cache_key] = body
+        self._forecast_reached[cache_key] = {
+            src: frozenset(pids) for src, pids in reached_by_source.items()
+        }
+        self._forecast_covers[cache_key] = {pid: frozenset(ents) for pid, ents in covers.items()}
+        self._forecast_entity_kind[cache_key] = entity_kind
+        self._forecast_entity_path[cache_key] = entity_path
+        return body
 
     def _forecast_candidate(self, decoded: DecodedPath, seed_set: set[str], trust: bool) -> str | None:
         if trust:
@@ -319,6 +471,7 @@ class Engine:
         coverage: dict[str, set[str]] = defaultdict(set)
         example: dict[str, list[str]] = {}
         kind_of: dict[str, str] = {}
+        best: dict[tuple[str, str], float] = {}
         for obs in observed_list:
             if obs not in self.catalog.by_stable:
                 continue
@@ -326,22 +479,30 @@ class Engine:
                 decoded = self.decode(raw)
                 if decoded is None:
                     continue
+                vector = _path_vector(decoded, self.catalog)
                 for stable, label in zip(decoded.stables, decoded.labels):
                     kind = _KIND.get(label)
                     if not kind:
                         continue
+                    weight = (1.0 / self.catalog.degree(stable)) * vector
+                    pair = (stable, obs)
+                    if weight >= best.get(pair, float("-inf")):
+                        best[pair] = weight
                     coverage[stable].add(obs)
                     kind_of[stable] = kind
                     example.setdefault(stable, list(reversed(decoded.stables)))
-        n_obs = max(len(observed_list), 1)
-        ranked = sorted(coverage, key=lambda s: (-len(coverage[s]), s))
+        scores: dict[str, float] = defaultdict(float)
+        for (stable, _obs), weight in best.items():
+            scores[stable] += weight
+        ranked = sorted(scores, key=lambda s: (-scores[s], s))
+        peak = max(scores.values(), default=1.0)
         candidates = []
         for stable in ranked[:k]:
             candidates.append(
                 {
                     "id": stable,
                     "kind": kind_of[stable],
-                    "score": round(len(coverage[stable]) / n_obs, 4),
+                    "score": round(scores[stable] / peak, 4) if peak else 0.0,
                     "path_to_observed": example[stable],
                 }
             )
@@ -415,52 +576,53 @@ class Engine:
         }
 
     def leverage(self, *, k: int, max_hops: int, limit: int) -> dict[str, Any]:
-        rels = tuple(T2_RELS) + tuple(T1_RELS)
-        bound = _bound(limit, k)
-        cypher = ss_paths(
-            rel_types=rels,
-            direction="both",
-            max_len=max_hops,
-            path_count=bound,
-            result_limit=bound,
+        seeds = sorted(self.catalog.seed_pids)
+        as_of = WORM_START + 360
+        measure_k = max(k, 100)
+        measure_hops = 3
+        trust = self.forecast(
+            seeds=seeds,
+            as_of=as_of,
+            k=measure_k,
+            topology="trust",
+            max_hops=measure_hops,
+            limit=measure_k,
         )
-        mids = sorted(
-            self.catalog.maintainer_degree,
-            key=lambda mid: (-self.catalog.maintainer_degree[mid], mid),
-        )[:k]
+        fkey = _forecast_key("trust", seeds, as_of, measure_k, measure_hops, measure_k)
+        covers = self._forecast_covers.get(fkey) or {}
+        kinds = self._forecast_entity_kind.get(fkey) or {}
+        paths = self._forecast_entity_path.get(fkey) or {}
+        at_risk: dict[str, set[str]] = defaultdict(set)
+        for pid, ents in covers.items():
+            for entity in ents:
+                at_risk[entity].add(pid)
+        ranked_ids = sorted(at_risk, key=lambda e: (-len(at_risk[e]), e))
         ranked: list[dict[str, Any]] = []
-        for mid in mids:
-            services: set[str] = set()
-            example: list[str] | None = None
-            for raw in self._safe_paths(cypher, mid):
-                decoded = self.decode(raw)
-                if decoded is None:
-                    continue
-                for stable, label in zip(decoded.stables, decoded.labels):
-                    if label == "Service":
-                        services.add(stable)
-                        example = example or decoded.stables
-            rec = self.catalog.rec(mid)
+        for eid in ranked_ids[:k]:
+            rec = self.catalog.rec(eid)
             ranked.append(
                 {
-                    "id": mid,
-                    "kind": "maintainer",
-                    "services_at_risk": len(services),
-                    "path": example or [mid],
-                    "packages_maintained": self.catalog.maintainer_degree.get(mid, 0),
-                    "login": rec.name if rec else mid,
+                    "id": eid,
+                    "kind": kinds.get(eid, "maintainer"),
+                    "packages_at_risk": len(at_risk[eid]),
+                    "path": paths.get(eid) or [eid],
+                    "packages_maintained": self.catalog.degree(eid),
+                    "login": rec.name if rec else eid,
                 }
             )
-        ranked.sort(key=lambda row: (-row["services_at_risk"], -row["packages_maintained"], row["id"]))
+        universe = {pid for pid in covers if pid in self.catalog.validation_pids}
+        mincut, blocked = _greedy_cover(covers, universe, kinds)
         return {
-            "cypher": cypher,
+            "cypher": trust["cypher"],
             "ranked": ranked,
-            "mincut": [],
+            "mincut": mincut,
             "stats": {
                 "k": k,
                 "max_hops": max_hops,
-                "result_limit": bound,
-                "spread_blocked_pct": None,
+                "result_limit": _bound(limit, k),
+                "spread_blocked_pct": blocked,
+                "cover": "greedy",
+                "reachable_validation": len(universe),
             },
         }
 
@@ -546,20 +708,29 @@ class Engine:
                 **extra,
             }
 
+        trust_key = _forecast_key("trust", seeds, as_of, k, 3, k)
+        dep_key = _forecast_key("dependency", seeds, as_of, k, 3, k)
+        r0_trust = _mean_validation_hits(
+            self._forecast_reached.get(trust_key) or {}, seeds, truth
+        )
+        r0_dep = _mean_validation_hits(
+            self._forecast_reached.get(dep_key) or {}, seeds, truth
+        )
         body = {
             "cypher": cypher,
             "precision_trust": pack(trust["predictions"], "trust"),
             "precision_dependency": pack(
                 dep["predictions"], "dependency", role="negative control"
             ),
-            "r0_trust": None,
-            "r0_dependency": None,
-            "note": "precision@K is scored against IOC validation pids. R0 is not yet defined.",
+            "r0_trust": r0_trust,
+            "r0_dependency": r0_dep,
+            "note": "precision@K and R0 scored against IOC validation pids. Min-cut is greedy cover.",
             "stats": {
                 "measured": True,
                 "ioc_set_loaded": True,
                 "seeds": len(seeds),
                 "validation_pids": len(truth),
+                "r0_definition": "mean validation pids reached per seed",
             },
         }
         self._evidence_cache[key] = body
@@ -593,9 +764,29 @@ class Engine:
                     "source": "ioc" if records else "published record",
                 }
             )
+        nodes = []
+        seen_pids: set[str] = set()
+        for row in records:
+            pid = row.get("pid")
+            at = row.get("first_seen_utc")
+            if not pid or at is None or pid in seen_pids:
+                continue
+            seen_pids.add(pid)
+            eco = "pypi" if str(pid).startswith("pypi:") else "npm"
+            role = "origin" if row.get("split") == "seed" else "hit"
+            nodes.append(
+                {
+                    "id": pid,
+                    "at": at,
+                    "eco": eco,
+                    "role": role,
+                    "label": str(pid).split(":", 1)[-1],
+                }
+            )
         return {
             "cypher": cypher,
             "events": events,
+            "nodes": nodes,
             "window_start": WORM_START,
             "window_end": WORM_START + 30600,
             "stats": {
@@ -605,8 +796,17 @@ class Engine:
         }
 
     def meta(self) -> dict[str, Any]:
-        seed = next(iter(sorted(self.catalog.seed_pids)), "npm:@tanstack/react-query")
-        vid = self.catalog.first_vid(seed)
+        seed = None
+        vid = None
+        for pid in sorted(self.catalog.seed_pids):
+            found = self.catalog.first_vid(pid)
+            if found:
+                seed = pid
+                vid = found
+                break
+        if seed is None:
+            seed = next(iter(sorted(self.catalog.seed_pids)), "npm:@tanstack/react-query")
+            vid = self.catalog.first_vid(seed)
         version = "5.101.4"
         name = seed.split(":", 1)[-1]
         eco = seed.split(":", 1)[0] if ":" in seed else "npm"

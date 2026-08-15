@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from copy import deepcopy
+
 from patient_zero.catalog import Catalog
 from patient_zero.engine import Engine
 from patient_zero.ids import hydra_id
@@ -202,4 +204,316 @@ def test_evidence_precision_is_scored_against_validation_pids():
     assert body["stats"]["measured"] is True
     assert body["precision_trust"]["precision_at_10"] == 1.0
     assert body["precision_dependency"]["precision_at_10"] == 0.0
-    assert body["r0_trust"] is None
+    assert body["r0_trust"] == 1.0
+    assert body["r0_dependency"] == 0.0
+
+
+def test_evidence_r0_is_mean_validation_pids_reached_per_seed():
+    """R0 = mean over seeds of |validation pids reached from that seed|. Not a hardcoded constant."""
+    seed_a = "npm:seed-a"
+    seed_b = "npm:seed-b"
+    val_one = "npm:val-one"
+    val_two = "npm:val-two"
+    mid = "npm:zzz-bridge"
+    tables = deepcopy(TABLES)
+    tables["packages"] = [_pkg(seed_a), _pkg(seed_b), _pkg(val_one), _pkg(val_two)]
+    tables["maintainers"] = [_maint(mid)]
+    tables["edges_maintains"] = [
+        {"mid": mid, "pid": seed_a},
+        {"mid": mid, "pid": val_one},
+        {"mid": mid, "pid": val_two},
+        {"mid": mid, "pid": seed_b},
+    ]
+    ioc = [
+        {"pid": seed_a, "split": "seed", "first_seen_utc": WORM},
+        {"pid": seed_b, "split": "seed", "first_seen_utc": WORM},
+        {"pid": val_one, "split": "validation", "first_seen_utc": WORM + 2000},
+        {"pid": val_two, "split": "validation", "first_seen_utc": WORM + 2000},
+    ]
+    cat = Catalog.from_tables(tables, ioc_records=ioc)
+
+    def run(cypher: str, params: dict):
+        if "MAINTAINS" not in cypher:
+            return []
+        if params["sourceNode"] == hydra_id(seed_a):
+            return [
+                FakePath(
+                    [_node(seed_a, "Package"), _node(mid, "Maintainer"), _node(val_one, "Package")],
+                    [FakeRel("MAINTAINS"), FakeRel("MAINTAINS")],
+                ),
+                FakePath(
+                    [_node(seed_a, "Package"), _node(mid, "Maintainer"), _node(val_two, "Package")],
+                    [FakeRel("MAINTAINS"), FakeRel("MAINTAINS")],
+                ),
+            ]
+        return []
+
+    engine = Engine(catalog=cat, run_paths=run)
+    body = engine.evidence(k=10)
+    # seed_a reaches 2 validation pids, seed_b reaches 0 → mean 1.0
+    assert body["r0_trust"] == 1.0
+    assert body["r0_dependency"] == 0.0
+    assert body["stats"]["r0_definition"] == "mean validation pids reached per seed"
+
+
+def test_leverage_greedy_cover_ranks_the_maintainer_who_covers_more_validation_pids():
+    seed = "npm:seed-pkg"
+    val_a = "npm:val-a"
+    val_b = "npm:val-b"
+    val_c = "npm:val-c"
+    wide = "npm:zzz-wide"
+    narrow = "npm:aaa-narrow"
+    tables = deepcopy(TABLES)
+    tables["packages"] = [_pkg(seed), _pkg(val_a), _pkg(val_b), _pkg(val_c)]
+    tables["maintainers"] = [_maint(wide), _maint(narrow)]
+    tables["edges_maintains"] = [
+        {"mid": wide, "pid": seed},
+        {"mid": wide, "pid": val_a},
+        {"mid": wide, "pid": val_b},
+        {"mid": narrow, "pid": seed},
+        {"mid": narrow, "pid": val_c},
+    ]
+    ioc = [
+        {"pid": seed, "split": "seed", "first_seen_utc": WORM},
+        {"pid": val_a, "split": "validation", "first_seen_utc": WORM + 2000},
+        {"pid": val_b, "split": "validation", "first_seen_utc": WORM + 2000},
+        {"pid": val_c, "split": "validation", "first_seen_utc": WORM + 2000},
+    ]
+    cat = Catalog.from_tables(tables, ioc_records=ioc)
+
+    def run(cypher: str, params: dict):
+        if "MAINTAINS" not in cypher:
+            return []
+        if params["sourceNode"] != hydra_id(seed):
+            return []
+        return [
+            FakePath(
+                [_node(seed, "Package"), _node(wide, "Maintainer"), _node(val_a, "Package")],
+                [FakeRel("MAINTAINS"), FakeRel("MAINTAINS")],
+            ),
+            FakePath(
+                [_node(seed, "Package"), _node(wide, "Maintainer"), _node(val_b, "Package")],
+                [FakeRel("MAINTAINS"), FakeRel("MAINTAINS")],
+            ),
+            FakePath(
+                [_node(seed, "Package"), _node(narrow, "Maintainer"), _node(val_c, "Package")],
+                [FakeRel("MAINTAINS"), FakeRel("MAINTAINS")],
+            ),
+        ]
+
+    engine = Engine(catalog=cat, run_paths=run)
+    body = engine.leverage(k=5, max_hops=4, limit=50)
+    assert body["ranked"][0]["id"] == wide
+    assert body["ranked"][0]["packages_at_risk"] == 2
+    assert body["ranked"][1]["id"] == narrow
+    assert body["mincut"][0]["id"] == wide
+    assert body["stats"]["cover"] == "greedy"
+    reachable = 3
+    covered = 3
+    assert body["stats"]["spread_blocked_pct"] == round(covered / reachable, 4)
+    assert body["stats"]["spread_blocked_pct"] == 1.0
+
+
+def test_timeline_nodes_come_from_ioc_first_seen():
+    cat = Catalog.from_tables(TABLES, ioc_records=IOC)
+    engine = Engine(catalog=cat, run_paths=lambda q, p: [])
+    body = engine.timeline()
+    by_id = {n["id"]: n for n in body["nodes"]}
+    assert by_id["npm:@tanstack/react-query"]["at"] == WORM
+    assert by_id["npm:@tanstack/react-query"]["role"] == "origin"
+    assert by_id["npm:@tanstack/store"]["role"] == "hit"
+    assert by_id["npm:@tanstack/store"]["eco"] == "npm"
+
+
+def _pkg(pid: str) -> dict:
+    name = pid.split(":", 1)[-1]
+    return {"pid": pid, "ecosystem": "npm", "name": name}
+
+
+def _maint(mid: str) -> dict:
+    login = mid.split(":", 1)[-1]
+    return {"mid": mid, "ecosystem": "npm", "login": login, "email_domain": None, "twofa": None}
+
+
+def test_forecast_rare_maintainer_outranks_popular_at_the_same_path_count():
+    """Exclusivity: 1/degree. Alphabetical would put aaa-via-popular first."""
+    seed = "npm:seed-pkg"
+    popular = "npm:aaa-popular"
+    rare = "npm:zzz-rare"
+    via_popular = "npm:aaa-via-popular"
+    via_rare = "npm:zzz-via-rare"
+    tables = deepcopy(TABLES)
+    tables["packages"] = [
+        _pkg(seed),
+        _pkg(via_popular),
+        _pkg(via_rare),
+        *[_pkg(f"npm:dummy-{i}") for i in range(20)],
+    ]
+    tables["maintainers"] = [_maint(popular), _maint(rare)]
+    tables["edges_maintains"] = [
+        {"mid": popular, "pid": seed},
+        {"mid": popular, "pid": via_popular},
+        *[{"mid": popular, "pid": f"npm:dummy-{i}"} for i in range(20)],
+        {"mid": rare, "pid": seed},
+        {"mid": rare, "pid": via_rare},
+    ]
+    ioc = [
+        {"pid": seed, "split": "seed", "first_seen_utc": WORM},
+        {"pid": via_popular, "split": "validation", "first_seen_utc": WORM + 2000},
+        {"pid": via_rare, "split": "validation", "first_seen_utc": WORM + 2000},
+    ]
+    cat = Catalog.from_tables(tables, ioc_records=ioc)
+    assert cat.degree(popular) > cat.degree(rare)
+
+    def run(cypher: str, params: dict):
+        if params["sourceNode"] != hydra_id(seed):
+            return []
+        return [
+            FakePath(
+                [_node(seed, "Package"), _node(popular, "Maintainer"), _node(via_popular, "Package")],
+                [FakeRel("MAINTAINS"), FakeRel("MAINTAINS")],
+            ),
+            FakePath(
+                [_node(seed, "Package"), _node(rare, "Maintainer"), _node(via_rare, "Package")],
+                [FakeRel("MAINTAINS"), FakeRel("MAINTAINS")],
+            ),
+        ]
+
+    engine = Engine(catalog=cat, run_paths=run)
+    body = engine.forecast(seeds=[seed], as_of=WORM + 360, k=10, topology="trust", max_hops=3, limit=50)
+    ranked = [row["pid"] for row in body["predictions"]]
+    assert ranked[0] == via_rare
+    assert via_popular in ranked
+    assert body["predictions"][0]["score"] > body["predictions"][1]["score"]
+
+
+def test_forecast_oidc_workflow_path_beats_plain_maintains():
+    """Vector is 2 when the path includes a pull_request_target / OIDC workflow."""
+    seed = "npm:seed-pkg"
+    mid = "npm:aaa-maintainer"
+    wid = "github:acme/app:.github/workflows/publish.yml"
+    via_maint = "npm:aaa-via-maintains"
+    via_oidc = "npm:zzz-via-oidc"
+    tables = deepcopy(TABLES)
+    tables["packages"] = [_pkg(seed), _pkg(via_maint), _pkg(via_oidc)]
+    tables["maintainers"] = [_maint(mid)]
+    tables["workflows"] = [
+        {
+            "wid": wid,
+            "rid": "github:acme/app",
+            "path": ".github/workflows/publish.yml",
+            "trigger": "pull_request_target",
+            "uses_pull_request_target": True,
+            "has_oidc_publish": True,
+        }
+    ]
+    tables["edges_maintains"] = [
+        {"mid": mid, "pid": seed},
+        {"mid": mid, "pid": via_maint},
+    ]
+    tables["edges_publishes_via_oidc"] = [{"wid": wid, "pid": via_oidc}]
+    cat = Catalog.from_tables(
+        tables,
+        ioc_records=[{"pid": seed, "split": "seed", "first_seen_utc": WORM}],
+    )
+
+    def run(cypher: str, params: dict):
+        if params["sourceNode"] != hydra_id(seed):
+            return []
+        return [
+            FakePath(
+                [_node(seed, "Package"), _node(mid, "Maintainer"), _node(via_maint, "Package")],
+                [FakeRel("MAINTAINS"), FakeRel("MAINTAINS")],
+            ),
+            FakePath(
+                [_node(seed, "Package"), _node(wid, "Workflow"), _node(via_oidc, "Package")],
+                [FakeRel("PUBLISHES_VIA_OIDC"), FakeRel("PUBLISHES_VIA_OIDC")],
+            ),
+        ]
+
+    engine = Engine(catalog=cat, run_paths=run)
+    body = engine.forecast(seeds=[seed], as_of=WORM + 360, k=10, topology="trust", max_hops=3, limit=50)
+    assert body["predictions"][0]["pid"] == via_oidc
+    assert body["predictions"][1]["pid"] == via_maint
+    assert body["predictions"][0]["score"] > body["predictions"][1]["score"]
+
+
+def test_index_case_rare_maintainer_outranks_popular_at_the_same_coverage():
+    observed = "npm:seed-pkg"
+    popular = "npm:aaa-popular"
+    rare = "npm:zzz-rare"
+    tables = deepcopy(TABLES)
+    tables["packages"] = [_pkg(observed), *[_pkg(f"npm:dummy-{i}") for i in range(20)]]
+    tables["maintainers"] = [_maint(popular), _maint(rare)]
+    tables["edges_maintains"] = [
+        {"mid": popular, "pid": observed},
+        *[{"mid": popular, "pid": f"npm:dummy-{i}"} for i in range(20)],
+        {"mid": rare, "pid": observed},
+        {"mid": rare, "pid": "npm:dummy-0"},
+    ]
+    cat = Catalog.from_tables(
+        tables,
+        ioc_records=[{"pid": observed, "split": "seed", "first_seen_utc": WORM}],
+    )
+
+    def run(cypher: str, params: dict):
+        if params["sourceNode"] != hydra_id(observed):
+            return []
+        return [
+            FakePath(
+                [_node(observed, "Package"), _node(popular, "Maintainer")],
+                [FakeRel("MAINTAINS")],
+            ),
+            FakePath(
+                [_node(observed, "Package"), _node(rare, "Maintainer")],
+                [FakeRel("MAINTAINS")],
+            ),
+        ]
+
+    engine = Engine(catalog=cat, run_paths=run)
+    body = engine.index_case(observed=[observed], as_of=WORM + 360, k=5, max_hops=4, limit=50)
+    assert body["candidates"][0]["id"] == rare
+    assert body["candidates"][1]["id"] == popular
+    assert body["candidates"][0]["score"] > body["candidates"][1]["score"]
+
+
+def test_forecast_repeat_hits_cache_and_does_not_reissue_sspaths():
+    cat = Catalog.from_tables(TABLES, ioc_records=IOC)
+    seed = "npm:@tanstack/react-query"
+    neighbour = "npm:@tanstack/store"
+    mid = "npm:tannerlinsley"
+    path = FakePath(
+        [_node(seed, "Package"), _node(mid, "Maintainer"), _node(neighbour, "Package")],
+        [FakeRel("MAINTAINS"), FakeRel("MAINTAINS")],
+    )
+    calls = {"n": 0}
+
+    def run(cypher: str, params: dict):
+        calls["n"] += 1
+        return [path] if params["sourceNode"] == hydra_id(seed) else []
+
+    engine = Engine(catalog=cat, run_paths=run)
+    kwargs = dict(seeds=[seed], as_of=WORM + 360, k=10, topology="trust", max_hops=3, limit=50)
+    first = engine.forecast(**kwargs)
+    second = engine.forecast(**kwargs)
+    assert first["predictions"][0]["pid"] == neighbour
+    assert second["predictions"] == first["predictions"]
+    assert calls["n"] == 1
+
+
+def test_meta_default_blast_skips_seed_without_a_parquet_version():
+    tables = deepcopy(TABLES)
+    tables["packages"] = [
+        _pkg("npm:@arktype/adapter"),
+        _pkg("npm:@tanstack/react-query"),
+    ]
+    ioc = [
+        {"pid": "npm:@arktype/adapter", "split": "seed", "first_seen_utc": WORM},
+        {"pid": "npm:@tanstack/react-query", "split": "seed", "first_seen_utc": WORM},
+    ]
+    cat = Catalog.from_tables(tables, ioc_records=ioc)
+    engine = Engine(catalog=cat, run_paths=lambda q, p: [])
+    blast = engine.meta()["default_blast"]
+    assert blast["name"] == "@tanstack/react-query"
+    assert blast["version"] == "5.101.4"
+    assert blast["ecosystem"] == "npm"

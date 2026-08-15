@@ -28,10 +28,18 @@
   var blast = { ecosystem: "npm", name: "@tanstack/react-query", version: "5.101.4" };
   var reachSid = "svc:mattermost";
   var pinnedVids = ["npm:@tanstack/react-table@8.10.7", "npm:@tanstack/table-core@8.10.7"];
+  var seedPids = [];
+  var clockNodes = [];
 
   var $ = function (id) {
     return document.getElementById(id);
   };
+
+  function seedsForClock(asOf) {
+    if (asOf < PZ.T26) return [];
+    if (seedPids.length) return seedPids.slice();
+    return PZ.seedsAt(asOf);
+  }
 
   function debounceRefresh() {
     clearTimeout(debounceTimer);
@@ -296,11 +304,12 @@
     empty(nodeG);
     if (chrome) empty(chrome);
 
-    var graph = PZ.GRAPH;
-    var visible = graph.nodes.filter(function (n) {
+    var liveNodes = clockNodes.length ? clockNodes : ((PZ.GRAPH && PZ.GRAPH.nodes) || []);
+    var visible = liveNodes.filter(function (n) {
       return n.at <= asOf;
     });
 
+    var edges = [];
     if (forecast && forecast.predictions) {
       var added = 0;
       forecast.predictions.forEach(function (p) {
@@ -319,13 +328,28 @@
           added += 1;
         }
       });
+      var visibleIds = {};
+      visible.forEach(function (n) {
+        visibleIds[n.id] = true;
+      });
+      forecast.predictions.forEach(function (p) {
+        var prev = null;
+        (p.justification_path || []).forEach(function (id) {
+          if (!visibleIds[id]) return;
+          if (prev && prev !== id) edges.push({ src: prev, dst: id, kind: "trust" });
+          prev = id;
+        });
+      });
+    }
+    if (PZ.mode !== "live" && PZ.GRAPH && PZ.GRAPH.edges) {
+      edges = edges.concat(PZ.GRAPH.edges);
     }
 
     if (count) count.textContent = visible.length ? visible.length + (visible.length === 1 ? " node" : " nodes") : "—";
     if (emptyMsg) emptyMsg.hidden = visible.length > 0;
 
     var hasPypi = visible.some(function (n) {
-      return n.eco === "pypi" && n.role !== "pred";
+      return n.eco === "pypi";
     });
     if (crossing) {
       if (hasPypi) crossing.removeAttribute("hidden");
@@ -352,7 +376,7 @@
     });
     var pos = layoutNodes(visible);
 
-    graph.edges.forEach(function (e) {
+    edges.forEach(function (e) {
       if (!ids[e.src] || !ids[e.dst]) return;
       var a = pos[e.src];
       var b = pos[e.dst];
@@ -404,7 +428,13 @@
     });
     if (chip) chip.textContent = services.length ? services.length + (services.length === 1 ? " service" : " services") : "—";
     if (!services.length) {
-      body.appendChild(el("p", "empty-line", "No services exposed at this instant. Scrub forward."));
+      body.appendChild(
+        el(
+          "p",
+          "empty-line",
+          "No reverse dependents in this slice. Lockfile pins are fetch-time, not 19:20."
+        )
+      );
       return;
     }
     services.forEach(function (s) {
@@ -453,7 +483,7 @@
       head.appendChild(el("strong", "hit-name", prettyId(p.pid)));
       var score = el("span", "hit-score");
       score.textContent = typeof p.score === "number" ? p.score.toFixed(2) : "—";
-      score.title = "Path support among seed traversals — not precision";
+      score.title = "Exclusivity × vector among seed traversals — not precision";
       head.appendChild(score);
       row.appendChild(head);
       row.appendChild(pathRow(p.justification_path || []));
@@ -514,7 +544,13 @@
       chip.textContent = verdicts.length ? exec + " execute / " + verdicts.length : "—";
     }
     if (!verdicts.length) {
-      body.appendChild(el("p", "empty-line", "No findings in tree at this instant."));
+      body.appendChild(
+        el(
+          "p",
+          "empty-line",
+          "No install hooks on unpublished IOC tarballs; lockfiles are not live at this instant."
+        )
+      );
       return;
     }
     if (verdicts.length) {
@@ -604,15 +640,27 @@
       var item = el("div", "lev-item");
       item.appendChild(el("span", "kind-tag kind-" + (r.kind || ""), r.kind || ""));
       item.appendChild(el("strong", "", prettyId(r.id)));
-      var n = r.services_at_risk;
-      if (typeof n === "number") item.appendChild(el("span", "lev-n", n + " svc"));
+      var n = typeof r.packages_at_risk === "number" ? r.packages_at_risk : r.services_at_risk;
+      if (typeof n === "number") {
+        item.appendChild(el("span", "lev-n", n + (typeof r.packages_at_risk === "number" ? " pkg" : " svc")));
+      }
       body.appendChild(item);
     });
     if (cut) {
       empty(cut);
       var blocked = payload && payload.stats && payload.stats.spread_blocked_pct;
+      var reachable = payload && payload.stats && payload.stats.reachable_validation;
       if (isNullish(blocked)) {
-        cut.appendChild(el("span", "ev-unmeasured", "min-cut % not yet measured"));
+        if (reachable === 0) {
+          cut.appendChild(el("span", "ev-unmeasured", "greedy cover: 0 validation pids reachable"));
+        } else {
+          cut.appendChild(el("span", "ev-unmeasured", "min-cut % not yet measured"));
+        }
+      } else {
+        var method = (payload.stats && payload.stats.cover) || "greedy";
+        cut.appendChild(
+          el("span", "lev-n", method + " cover " + Math.round(Number(blocked) * 100) + "%")
+        );
       }
       (payload.mincut || []).forEach(function (m) {
         var chip = el("span", "lev-cut-chip");
@@ -640,7 +688,7 @@
     var asOf = scrubToAsOf(Number(scrub.value));
     updateClock(asOf);
     var seq = ++inflight;
-    var seeds = PZ.seedsAt(asOf);
+    var seeds = seedsForClock(asOf);
     var vids = PZ.vidsAt(asOf);
 
     var radiusReq = PZ.fetchApi("/api/blast-radius", {
@@ -744,8 +792,10 @@
       var meta = pair[1];
       if (tl && typeof tl.window_end === "number") windowEnd = tl.window_end;
       if (tl && typeof tl.window_start === "number") windowStart = tl.window_start;
+      if (tl && tl.nodes && tl.nodes.length) clockNodes = tl.nodes;
       if (meta && meta.default_blast) blast = meta.default_blast;
       if (meta && meta.default_sid) reachSid = meta.default_sid;
+      if (meta && meta.seed_pids && meta.seed_pids.length) seedPids = meta.seed_pids;
       noteStub([tl, meta]);
       buildScrubMarks();
       updateClock(scrubToAsOf(Number(scrub.value)));

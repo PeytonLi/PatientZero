@@ -124,3 +124,11 @@ def test_catalog_seed_and_validation_pids_from_ioc_split():
     cat = Catalog.from_tables(TABLES, ioc_records=IOC)
     assert cat.seed_pids == frozenset({"npm:@tanstack/react-query"})
     assert cat.validation_pids == frozenset({"npm:@tanstack/store"})
+
+
+def test_catalog_degree_counts_maintainers_repos_and_workflows():
+    cat = Catalog.from_tables(TABLES, ioc_records=IOC)
+    assert cat.degree("npm:tannerlinsley") == 2
+    assert cat.degree("github:TanStack/query") == 1
+    assert cat.degree("github:TanStack/query:.github/workflows/release.yml") == 1
+    assert cat.degree("npm:unknown-entity") == 1

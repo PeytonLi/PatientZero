@@ -4,7 +4,8 @@ Every response carries `cypher`, `latency_ms`, and `stub`. `stub` is false:
 handlers call HydraDB (or an injected runner in tests) and join names/hooks
 from Parquet. Precision@K is scored against the IOC validation split only
 when a forecast actually returned paths; otherwise it stays JSON null.
-R0 stays null until that statistic is defined and measured.
+R0 is the mean number of validation pids reached per seed, measured
+from those same paths. Min-cut is greedy cover on T2, not Edmonds-Karp.
 """
 
 from __future__ import annotations

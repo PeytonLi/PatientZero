@@ -1,0 +1,917 @@
+{
+  "as_of": 1778527560,
+  "elapsed_s": 207.57,
+  "seeds": 42,
+  "validation_pids": 138,
+  "forecast_trust": {
+    "cypher": "CALL algo.SSpaths({\n  sourceNode: $sourceNode,\n  relTypes: ['MAINTAINS', 'PUBLISHED_FROM', 'HAS_WORKFLOW', 'PUBLISHES_VIA_OIDC'],\n  relDirection: 'both',\n  maxLen: 3,\n  pathCount: 100,\n  resultLimit: 100\n}) YIELD path\nRETURN path",
+    "predictions": [
+      {
+        "pid": "npm:gl-react-blurhash",
+        "score": 1.0,
+        "justification_path": [
+          "npm:@tanstack/zod-adapter",
+          "npm:schiller-manuel",
+          "npm:gl-react-blurhash"
+        ]
+      },
+      {
+        "pid": "npm:seroval",
+        "score": 1.0,
+        "justification_path": [
+          "npm:@tanstack/zod-adapter",
+          "npm:schiller-manuel",
+          "npm:seroval"
+        ]
+      },
+      {
+        "pid": "npm:@tanstack/ai-code-mode-skills",
+        "score": 0.1893,
+        "justification_path": [
+          "npm:@tanstack/zod-adapter",
+          "npm:tannerlinsley",
+          "npm:@tanstack/ai-code-mode-skills"
+        ]
+      },
+      {
+        "pid": "npm:@tanstack/ai-codex",
+        "score": 0.1893,
+        "justification_path": [
+          "npm:@tanstack/zod-adapter",
+          "npm:tannerlinsley",
+          "npm:@tanstack/ai-codex"
+        ]
+      },
+      {
+        "pid": "npm:@tanstack/ai-mistral",
+        "score": 0.1893,
+        "justification_path": [
+          "npm:@tanstack/zod-adapter",
+          "npm:tannerlinsley",
+          "npm:@tanstack/ai-mistral"
+        ]
+      },
+      {
+        "pid": "npm:@tanstack/ai-ollama",
+        "score": 0.1893,
+        "justification_path": [
+          "npm:@tanstack/zod-adapter",
+          "npm:tannerlinsley",
+          "npm:@tanstack/ai-ollama"
+        ]
+      },
+      {
+        "pid": "npm:@tanstack/ai-react-ui",
+        "score": 0.1893,
+        "justification_path": [
+          "npm:@tanstack/zod-adapter",
+          "npm:tannerlinsley",
+          "npm:@tanstack/ai-react-ui"
+        ]
+      },
+      {
+        "pid": "npm:@tanstack/ai-sandbox",
+        "score": 0.1893,
+        "justification_path": [
+          "npm:@tanstack/zod-adapter",
+          "npm:tannerlinsley",
+          "npm:@tanstack/ai-sandbox"
+        ]
+      },
+      {
+        "pid": "npm:@tanstack/ai-sandbox-local-process",
+        "score": 0.1893,
+        "justification_path": [
+          "npm:@tanstack/zod-adapter",
+          "npm:tannerlinsley",
+          "npm:@tanstack/ai-sandbox-local-process"
+        ]
+      },
+      {
+        "pid": "npm:@tanstack/ai-vue",
+        "score": 0.1893,
+        "justification_path": [
+          "npm:@tanstack/zod-adapter",
+          "npm:tannerlinsley",
+          "npm:@tanstack/ai-vue"
+        ]
+      },
+      {
+        "pid": "npm:@tanstack/angular-pacer",
+        "score": 0.1893,
+        "justification_path": [
+          "npm:@tanstack/zod-adapter",
+          "npm:tannerlinsley",
+          "npm:@tanstack/angular-pacer"
+        ]
+      },
+      {
+        "pid": "npm:@tanstack/angular-query-devtools-experimental",
+        "score": 0.1893,
+        "justification_path": [
+          "npm:@tanstack/zod-adapter",
+          "npm:tannerlinsley",
+          "npm:@tanstack/angular-query-devtools-experimental"
+        ]
+      },
+      {
+        "pid": "npm:@tanstack/angular-store",
+        "score": 0.1893,
+        "justification_path": [
+          "npm:@tanstack/zod-adapter",
+          "npm:tannerlinsley",
+          "npm:@tanstack/angular-store"
+        ]
+      },
+      {
+        "pid": "npm:@tanstack/angular-table",
+        "score": 0.1893,
+        "justification_path": [
+          "npm:@tanstack/zod-adapter",
+          "npm:tannerlinsley",
+          "npm:@tanstack/angular-table"
+        ]
+      },
+      {
+        "pid": "npm:@tanstack/capacitor-db-sqlite-persistence",
+        "score": 0.1893,
+        "justification_path": [
+          "npm:@tanstack/zod-adapter",
+          "npm:tannerlinsley",
+          "npm:@tanstack/capacitor-db-sqlite-persistence"
+        ]
+      },
+      {
+        "pid": "npm:@tanstack/charts",
+        "score": 0.1893,
+        "justification_path": [
+          "npm:@tanstack/zod-adapter",
+          "npm:tannerlinsley",
+          "npm:@tanstack/charts"
+        ]
+      },
+      {
+        "pid": "npm:@tanstack/charts-scales",
+        "score": 0.1893,
+        "justification_path": [
+          "npm:@tanstack/zod-adapter",
+          "npm:tannerlinsley",
+          "npm:@tanstack/charts-scales"
+        ]
+      },
+      {
+        "pid": "npm:@tanstack/create",
+        "score": 0.1893,
+        "justification_path": [
+          "npm:@tanstack/zod-adapter",
+          "npm:tannerlinsley",
+          "npm:@tanstack/create"
+        ]
+      },
+      {
+        "pid": "npm:@tanstack/db",
+        "score": 0.1893,
+        "justification_path": [
+          "npm:@tanstack/zod-adapter",
+          "npm:tannerlinsley",
+          "npm:@tanstack/db"
+        ]
+      },
+      {
+        "pid": "npm:@tanstack/devtools",
+        "score": 0.1893,
+        "justification_path": [
+          "npm:@tanstack/zod-adapter",
+          "npm:tannerlinsley",
+          "npm:@tanstack/devtools"
+        ]
+      },
+      {
+        "pid": "npm:@tanstack/devtools-client",
+        "score": 0.1893,
+        "justification_path": [
+          "npm:@tanstack/zod-adapter",
+          "npm:tannerlinsley",
+          "npm:@tanstack/devtools-client"
+        ]
+      },
+      {
+        "pid": "npm:@tanstack/devtools-utils",
+        "score": 0.1893,
+        "justification_path": [
+          "npm:@tanstack/zod-adapter",
+          "npm:tannerlinsley",
+          "npm:@tanstack/devtools-utils"
+        ]
+      },
+      {
+        "pid": "npm:@tanstack/form-core",
+        "score": 0.1893,
+        "justification_path": [
+          "npm:@tanstack/zod-adapter",
+          "npm:tannerlinsley",
+          "npm:@tanstack/form-core"
+        ]
+      },
+      {
+        "pid": "npm:@tanstack/highlight",
+        "score": 0.1893,
+        "justification_path": [
+          "npm:@tanstack/zod-adapter",
+          "npm:tannerlinsley",
+          "npm:@tanstack/highlight"
+        ]
+      },
+      {
+        "pid": "npm:@tanstack/lit-form",
+        "score": 0.1893,
+        "justification_path": [
+          "npm:@tanstack/zod-adapter",
+          "npm:tannerlinsley",
+          "npm:@tanstack/lit-form"
+        ]
+      },
+      {
+        "pid": "npm:@tanstack/lit-table",
+        "score": 0.1893,
+        "justification_path": [
+          "npm:@tanstack/zod-adapter",
+          "npm:tannerlinsley",
+          "npm:@tanstack/lit-table"
+        ]
+      },
+      {
+        "pid": "npm:@tanstack/offline-transactions",
+        "score": 0.1893,
+        "justification_path": [
+          "npm:@tanstack/zod-adapter",
+          "npm:tannerlinsley",
+          "npm:@tanstack/offline-transactions"
+        ]
+      },
+      {
+        "pid": "npm:@tanstack/openai-base",
+        "score": 0.1893,
+        "justification_path": [
+          "npm:@tanstack/zod-adapter",
+          "npm:tannerlinsley",
+          "npm:@tanstack/openai-base"
+        ]
+      },
+      {
+        "pid": "npm:@tanstack/pacer",
+        "score": 0.1893,
+        "justification_path": [
+          "npm:@tanstack/zod-adapter",
+          "npm:tannerlinsley",
+          "npm:@tanstack/pacer"
+        ]
+      },
+      {
+        "pid": "npm:@tanstack/preact-devtools",
+        "score": 0.1893,
+        "justification_path": [
+          "npm:@tanstack/zod-adapter",
+          "npm:tannerlinsley",
+          "npm:@tanstack/preact-devtools"
+        ]
+      },
+      {
+        "pid": "npm:@tanstack/query-db-collection",
+        "score": 0.1893,
+        "justification_path": [
+          "npm:@tanstack/zod-adapter",
+          "npm:tannerlinsley",
+          "npm:@tanstack/query-db-collection"
+        ]
+      },
+      {
+        "pid": "npm:@tanstack/query-persist-client-core",
+        "score": 0.1893,
+        "justification_path": [
+          "npm:@tanstack/zod-adapter",
+          "npm:tannerlinsley",
+          "npm:@tanstack/query-persist-client-core"
+        ]
+      },
+      {
+        "pid": "npm:@tanstack/react-ai-devtools",
+        "score": 0.1893,
+        "justification_path": [
+          "npm:@tanstack/zod-adapter",
+          "npm:tannerlinsley",
+          "npm:@tanstack/react-ai-devtools"
+        ]
+      },
+      {
+        "pid": "npm:@tanstack/react-cross-context",
+        "score": 0.1893,
+        "justification_path": [
+          "npm:@tanstack/zod-adapter",
+          "npm:tannerlinsley",
+          "npm:@tanstack/react-cross-context"
+        ]
+      },
+      {
+        "pid": "npm:@tanstack/react-form-nextjs",
+        "score": 0.1893,
+        "justification_path": [
+          "npm:@tanstack/zod-adapter",
+          "npm:tannerlinsley",
+          "npm:@tanstack/react-form-nextjs"
+        ]
+      },
+      {
+        "pid": "npm:@tanstack/react-form-remix",
+        "score": 0.1893,
+        "justification_path": [
+          "npm:@tanstack/zod-adapter",
+          "npm:tannerlinsley",
+          "npm:@tanstack/react-form-remix"
+        ]
+      },
+      {
+        "pid": "npm:@tanstack/react-hotkeys-devtools",
+        "score": 0.1893,
+        "justification_path": [
+          "npm:@tanstack/zod-adapter",
+          "npm:tannerlinsley",
+          "npm:@tanstack/react-hotkeys-devtools"
+        ]
+      },
+      {
+        "pid": "npm:@tanstack/react-location",
+        "score": 0.1893,
+        "justification_path": [
+          "npm:@tanstack/zod-adapter",
+          "npm:tannerlinsley",
+          "npm:@tanstack/react-location"
+        ]
+      },
+      {
+        "pid": "npm:@tanstack/react-native-db-sqlite-persistence",
+        "score": 0.1893,
+        "justification_path": [
+          "npm:@tanstack/zod-adapter",
+          "npm:tannerlinsley",
+          "npm:@tanstack/react-native-db-sqlite-persistence"
+        ]
+      },
+      {
+        "pid": "npm:@tanstack/react-query-devtools",
+        "score": 0.1893,
+        "justification_path": [
+          "npm:@tanstack/zod-adapter",
+          "npm:tannerlinsley",
+          "npm:@tanstack/react-query-devtools"
+        ]
+      },
+      {
+        "pid": "npm:@tanstack/react-query-next-experimental",
+        "score": 0.1893,
+        "justification_path": [
+          "npm:@tanstack/zod-adapter",
+          "npm:tannerlinsley",
+          "npm:@tanstack/react-query-next-experimental"
+        ]
+      },
+      {
+        "pid": "npm:@tanstack/react-ranger",
+        "score": 0.1893,
+        "justification_path": [
+          "npm:@tanstack/zod-adapter",
+          "npm:tannerlinsley",
+          "npm:@tanstack/react-ranger"
+        ]
+      },
+      {
+        "pid": "npm:@tanstack/react-table-devtools",
+        "score": 0.1893,
+        "justification_path": [
+          "npm:@tanstack/zod-adapter",
+          "npm:tannerlinsley",
+          "npm:@tanstack/react-table-devtools"
+        ]
+      },
+      {
+        "pid": "npm:@tanstack/react-virtual",
+        "score": 0.1893,
+        "justification_path": [
+          "npm:@tanstack/zod-adapter",
+          "npm:tannerlinsley",
+          "npm:@tanstack/react-virtual"
+        ]
+      },
+      {
+        "pid": "npm:@tanstack/router-zod-adapter",
+        "score": 0.1893,
+        "justification_path": [
+          "npm:@tanstack/zod-adapter",
+          "npm:tannerlinsley",
+          "npm:@tanstack/router-zod-adapter"
+        ]
+      },
+      {
+        "pid": "npm:@tanstack/server-functions-plugin",
+        "score": 0.1893,
+        "justification_path": [
+          "npm:@tanstack/zod-adapter",
+          "npm:tannerlinsley",
+          "npm:@tanstack/server-functions-plugin"
+        ]
+      },
+      {
+        "pid": "npm:@tanstack/solid-query-devtools",
+        "score": 0.1893,
+        "justification_path": [
+          "npm:@tanstack/zod-adapter",
+          "npm:tannerlinsley",
+          "npm:@tanstack/solid-query-devtools"
+        ]
+      },
+      {
+        "pid": "npm:@tanstack/solid-store",
+        "score": 0.1893,
+        "justification_path": [
+          "npm:@tanstack/zod-adapter",
+          "npm:tannerlinsley",
+          "npm:@tanstack/solid-store"
+        ]
+      },
+      {
+        "pid": "npm:@tanstack/solid-table-devtools",
+        "score": 0.1893,
+        "justification_path": [
+          "npm:@tanstack/zod-adapter",
+          "npm:tannerlinsley",
+          "npm:@tanstack/solid-table-devtools"
+        ]
+      },
+      {
+        "pid": "npm:@tanstack/start-server",
+        "score": 0.1893,
+        "justification_path": [
+          "npm:@tanstack/zod-adapter",
+          "npm:tannerlinsley",
+          "npm:@tanstack/start-server"
+        ]
+      },
+      {
+        "pid": "npm:@tanstack/start-server-functions-fetcher",
+        "score": 0.1893,
+        "justification_path": [
+          "npm:@tanstack/zod-adapter",
+          "npm:tannerlinsley",
+          "npm:@tanstack/start-server-functions-fetcher"
+        ]
+      },
+      {
+        "pid": "npm:@tanstack/start-server-functions-server",
+        "score": 0.1893,
+        "justification_path": [
+          "npm:@tanstack/zod-adapter",
+          "npm:tannerlinsley",
+          "npm:@tanstack/start-server-functions-server"
+        ]
+      },
+      {
+        "pid": "npm:@tanstack/svelte-query-devtools",
+        "score": 0.1893,
+        "justification_path": [
+          "npm:@tanstack/zod-adapter",
+          "npm:tannerlinsley",
+          "npm:@tanstack/svelte-query-devtools"
+        ]
+      },
+      {
+        "pid": "npm:@tanstack/svelte-table",
+        "score": 0.1893,
+        "justification_path": [
+          "npm:@tanstack/zod-adapter",
+          "npm:tannerlinsley",
+          "npm:@tanstack/svelte-table"
+        ]
+      },
+      {
+        "pid": "npm:@tanstack/valibot-form-adapter",
+        "score": 0.1893,
+        "justification_path": [
+          "npm:@tanstack/zod-adapter",
+          "npm:tannerlinsley",
+          "npm:@tanstack/valibot-form-adapter"
+        ]
+      },
+      {
+        "pid": "npm:@tanstack/vue-hotkeys",
+        "score": 0.1893,
+        "justification_path": [
+          "npm:@tanstack/zod-adapter",
+          "npm:tannerlinsley",
+          "npm:@tanstack/vue-hotkeys"
+        ]
+      },
+      {
+        "pid": "npm:@tanstack/workflow-core",
+        "score": 0.1893,
+        "justification_path": [
+          "npm:@tanstack/zod-adapter",
+          "npm:tannerlinsley",
+          "npm:@tanstack/workflow-core"
+        ]
+      },
+      {
+        "pid": "npm:@tanstack/workflow-runtime",
+        "score": 0.1893,
+        "justification_path": [
+          "npm:@tanstack/zod-adapter",
+          "npm:tannerlinsley",
+          "npm:@tanstack/workflow-runtime"
+        ]
+      },
+      {
+        "pid": "npm:chartjs-color",
+        "score": 0.1893,
+        "justification_path": [
+          "npm:@tanstack/zod-adapter",
+          "npm:tannerlinsley",
+          "npm:chartjs-color"
+        ]
+      },
+      {
+        "pid": "npm:crossfilter2",
+        "score": 0.1893,
+        "justification_path": [
+          "npm:@tanstack/zod-adapter",
+          "npm:tannerlinsley",
+          "npm:crossfilter2"
+        ]
+      },
+      {
+        "pid": "npm:react-charts",
+        "score": 0.1893,
+        "justification_path": [
+          "npm:@tanstack/zod-adapter",
+          "npm:tannerlinsley",
+          "npm:react-charts"
+        ]
+      },
+      {
+        "pid": "npm:react-form",
+        "score": 0.1893,
+        "justification_path": [
+          "npm:@tanstack/zod-adapter",
+          "npm:tannerlinsley",
+          "npm:react-form"
+        ]
+      },
+      {
+        "pid": "npm:react-move",
+        "score": 0.1893,
+        "justification_path": [
+          "npm:@tanstack/zod-adapter",
+          "npm:tannerlinsley",
+          "npm:react-move"
+        ]
+      },
+      {
+        "pid": "npm:react-query",
+        "score": 0.1893,
+        "justification_path": [
+          "npm:@tanstack/zod-adapter",
+          "npm:tannerlinsley",
+          "npm:react-query"
+        ]
+      },
+      {
+        "pid": "npm:react-syntax",
+        "score": 0.1893,
+        "justification_path": [
+          "npm:@tanstack/zod-adapter",
+          "npm:tannerlinsley",
+          "npm:react-syntax"
+        ]
+      },
+      {
+        "pid": "npm:react-table-6",
+        "score": 0.1893,
+        "justification_path": [
+          "npm:@tanstack/zod-adapter",
+          "npm:tannerlinsley",
+          "npm:react-table-6"
+        ]
+      },
+      {
+        "pid": "npm:react-virtual",
+        "score": 0.1893,
+        "justification_path": [
+          "npm:@tanstack/zod-adapter",
+          "npm:tannerlinsley",
+          "npm:react-virtual"
+        ]
+      },
+      {
+        "pid": "npm:vue-query",
+        "score": 0.1893,
+        "justification_path": [
+          "npm:@tanstack/zod-adapter",
+          "npm:tannerlinsley",
+          "npm:vue-query"
+        ]
+      },
+      {
+        "pid": "npm:@tanstack/react-start-plugin",
+        "score": 0.1487,
+        "justification_path": [
+          "npm:@tanstack/vue-start-server",
+          "npm:tannerlinsley",
+          "npm:@tanstack/react-start-plugin"
+        ]
+      },
+      {
+        "pid": "npm:@tanstack/ai-utils",
+        "score": 0.1307,
+        "justification_path": [
+          "npm:@tanstack/vue-start-server",
+          "npm:tannerlinsley",
+          "npm:@tanstack/ai-utils"
+        ]
+      },
+      {
+        "pid": "npm:@tanstack/db-sqlite-persistence-core",
+        "score": 0.1307,
+        "justification_path": [
+          "npm:@tanstack/vue-start-server",
+          "npm:tannerlinsley",
+          "npm:@tanstack/db-sqlite-persistence-core"
+        ]
+      },
+      {
+        "pid": "npm:@tanstack/directive-functions-plugin",
+        "score": 0.1307,
+        "justification_path": [
+          "npm:@tanstack/vue-start-server",
+          "npm:tannerlinsley",
+          "npm:@tanstack/directive-functions-plugin"
+        ]
+      },
+      {
+        "pid": "npm:@tanstack/intent",
+        "score": 0.1307,
+        "justification_path": [
+          "npm:@tanstack/vue-start-server",
+          "npm:tannerlinsley",
+          "npm:@tanstack/intent"
+        ]
+      },
+      {
+        "pid": "npm:@tanstack/lit-store",
+        "score": 0.1307,
+        "justification_path": [
+          "npm:@tanstack/vue-start-server",
+          "npm:tannerlinsley",
+          "npm:@tanstack/lit-store"
+        ]
+      },
+      {
+        "pid": "npm:@tanstack/query-devtools",
+        "score": 0.1307,
+        "justification_path": [
+          "npm:@tanstack/vue-start-server",
+          "npm:tannerlinsley",
+          "npm:@tanstack/query-devtools"
+        ]
+      },
+      {
+        "pid": "npm:@tanstack/react-pacer-devtools",
+        "score": 0.1307,
+        "justification_path": [
+          "npm:@tanstack/vue-start-server",
+          "npm:tannerlinsley",
+          "npm:@tanstack/react-pacer-devtools"
+        ]
+      },
+      {
+        "pid": "npm:@tanstack/svelte-query",
+        "score": 0.1307,
+        "justification_path": [
+          "npm:@tanstack/vue-start-server",
+          "npm:tannerlinsley",
+          "npm:@tanstack/svelte-query"
+        ]
+      },
+      {
+        "pid": "npm:@tanstack/svelte-store",
+        "score": 0.1307,
+        "justification_path": [
+          "npm:@tanstack/vue-start-server",
+          "npm:tannerlinsley",
+          "npm:@tanstack/svelte-store"
+        ]
+      },
+      {
+        "pid": "npm:@tanstack/vue-virtual",
+        "score": 0.1307,
+        "justification_path": [
+          "npm:@tanstack/vue-start-server",
+          "npm:tannerlinsley",
+          "npm:@tanstack/vue-virtual"
+        ]
+      },
+      {
+        "pid": "npm:chart.js",
+        "score": 0.1307,
+        "justification_path": [
+          "npm:@tanstack/vue-start-server",
+          "npm:tannerlinsley",
+          "npm:chart.js"
+        ]
+      },
+      {
+        "pid": "npm:react-show",
+        "score": 0.1307,
+        "justification_path": [
+          "npm:@tanstack/vue-start-server",
+          "npm:tannerlinsley",
+          "npm:react-show"
+        ]
+      },
+      {
+        "pid": "npm:react-static-plugin-reach-router",
+        "score": 0.1307,
+        "justification_path": [
+          "npm:@tanstack/vue-start-server",
+          "npm:tannerlinsley",
+          "npm:react-static-plugin-reach-router"
+        ]
+      },
+      {
+        "pid": "npm:react-static-plugin-styled-components",
+        "score": 0.1307,
+        "justification_path": [
+          "npm:@tanstack/vue-start-server",
+          "npm:tannerlinsley",
+          "npm:react-static-plugin-styled-components"
+        ]
+      },
+      {
+        "pid": "npm:@tanstack/db-ivm",
+        "score": 0.0451,
+        "justification_path": [
+          "npm:@tanstack/vue-start-server",
+          "npm:tannerlinsley",
+          "npm:@tanstack/db-ivm"
+        ]
+      }
+    ],
+    "stats": {
+      "topology": "trust",
+      "is_negative_control": false,
+      "seeds": 42,
+      "k": 100,
+      "max_hops": 3,
+      "result_limit": 100,
+      "as_of": 1778527560,
+      "precision_at_k": null
+    }
+  },
+  "forecast_dependency": {
+    "cypher": "CALL algo.SSpaths({\n  sourceNode: $sourceNode,\n  relTypes: ['DEPENDS_ON', 'PINS'],\n  relDirection: 'incoming',\n  maxLen: 3,\n  pathCount: 100,\n  resultLimit: 100\n}) YIELD path\nRETURN path",
+    "predictions": [],
+    "stats": {
+      "topology": "dependency",
+      "is_negative_control": true,
+      "seeds": 42,
+      "k": 100,
+      "max_hops": 3,
+      "result_limit": 100,
+      "as_of": 1778527560,
+      "precision_at_k": null
+    }
+  },
+  "evidence": {
+    "cypher": "// control: identical forecast, relTypes swapped, scored against IOC validation pids\nCALL algo.SSpaths({\n  sourceNode: $sourceNode,\n  relTypes: ['MAINTAINS', 'PUBLISHED_FROM', 'HAS_WORKFLOW', 'PUBLISHES_VIA_OIDC'],\n  relDirection: 'both',\n  maxLen: 3,\n  pathCount: 100,\n  resultLimit: 100\n}) YIELD path\nRETURN path",
+    "precision_trust": {
+      "precision_at_10": 0.0,
+      "precision_at_50": 0.0,
+      "precision_at_100": 0.0,
+      "recall_at_100": 0.0,
+      "measured": true,
+      "topology": "trust"
+    },
+    "precision_dependency": {
+      "precision_at_10": 0.0,
+      "precision_at_50": 0.0,
+      "precision_at_100": 0.0,
+      "recall_at_100": 0.0,
+      "measured": true,
+      "topology": "dependency",
+      "role": "negative control"
+    },
+    "r0_trust": 0.0,
+    "r0_dependency": 0.0,
+    "note": "precision@K and R0 scored against IOC validation pids. Min-cut is greedy cover.",
+    "stats": {
+      "measured": true,
+      "ioc_set_loaded": true,
+      "seeds": 42,
+      "validation_pids": 138,
+      "r0_definition": "mean validation pids reached per seed"
+    }
+  },
+  "leverage": {
+    "cypher": "CALL algo.SSpaths({\n  sourceNode: $sourceNode,\n  relTypes: ['MAINTAINS', 'PUBLISHED_FROM', 'HAS_WORKFLOW', 'PUBLISHES_VIA_OIDC'],\n  relDirection: 'both',\n  maxLen: 3,\n  pathCount: 100,\n  resultLimit: 100\n}) YIELD path\nRETURN path",
+    "ranked": [
+      {
+        "id": "npm:tannerlinsley",
+        "kind": "maintainer",
+        "packages_at_risk": 82,
+        "path": [
+          "npm:@tanstack/arktype-adapter",
+          "npm:tannerlinsley",
+          "npm:react-table-6"
+        ],
+        "packages_maintained": 256,
+        "login": "tannerlinsley"
+      },
+      {
+        "id": "npm:schiller-manuel",
+        "kind": "maintainer",
+        "packages_at_risk": 2,
+        "path": [
+          "npm:@tanstack/arktype-adapter",
+          "npm:schiller-manuel",
+          "npm:seroval"
+        ],
+        "packages_maintained": 15,
+        "login": "schiller-manuel"
+      }
+    ],
+    "mincut": [],
+    "stats": {
+      "k": 5,
+      "max_hops": 4,
+      "result_limit": 40,
+      "spread_blocked_pct": null,
+      "cover": "greedy",
+      "reachable_validation": 0
+    }
+  },
+  "index_case": {
+    "cypher": "CALL algo.SSpaths({\n  sourceNode: $sourceNode,\n  relTypes: ['MAINTAINS', 'PUBLISHED_FROM', 'HAS_WORKFLOW', 'PUBLISHES_VIA_OIDC'],\n  relDirection: 'both',\n  maxLen: 4,\n  pathCount: 40,\n  resultLimit: 40\n}) YIELD path\nRETURN path",
+    "candidates": [
+      {
+        "id": "github:TanStack/router:.github/workflows/release.yml",
+        "kind": "workflow",
+        "score": 1.0,
+        "path_to_observed": [
+          "github:TanStack/router:.github/workflows/release.yml",
+          "npm:@tanstack/arktype-adapter"
+        ]
+      },
+      {
+        "id": "github:TanStack/router",
+        "kind": "repo",
+        "score": 0.5,
+        "path_to_observed": [
+          "github:TanStack/router",
+          "npm:@tanstack/arktype-adapter"
+        ]
+      },
+      {
+        "id": "npm:schiller-manuel",
+        "kind": "maintainer",
+        "score": 0.4333,
+        "path_to_observed": [
+          "npm:schiller-manuel",
+          "npm:@tanstack/arktype-adapter"
+        ]
+      },
+      {
+        "id": "npm:tkdodo",
+        "kind": "maintainer",
+        "score": 0.4333,
+        "path_to_observed": [
+          "npm:tkdodo",
+          "npm:@tanstack/arktype-adapter"
+        ]
+      },
+      {
+        "id": "npm:alemtuzlak",
+        "kind": "maintainer",
+        "score": 0.083,
+        "path_to_observed": [
+          "npm:alemtuzlak",
+          "npm:@tanstack/arktype-adapter"
+        ]
+      }
+    ],
+    "stats": {
+      "observed": 42,
+      "k": 5,
+      "max_hops": 4,
+      "result_limit": 40,
+      "as_of": 1778527560,
+      "true_origin_rank": null
+    }
+  }
+}
