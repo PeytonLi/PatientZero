@@ -53,6 +53,24 @@
   </div>
 </section>
 
+<section class="control-strip" aria-labelledby="ctrl-h">
+  <div class="ctrl-copy">
+    <h2 id="ctrl-h">Control</h2>
+    <p>Identical <code>algo.SSpaths</code>. Only <code>relTypes</code> changes.</p>
+  </div>
+  <button type="button" class="ctrl-cell ctrl-trust seg-btn is-on" data-topology="trust">
+    <span class="ctrl-k">Trust</span>
+    <span class="ctrl-n" id="ctrl-trust-n">—</span>
+    <span class="ctrl-u">paths</span>
+  </button>
+  <button type="button" class="ctrl-cell ctrl-dep seg-btn" data-topology="dependency">
+    <span class="ctrl-k">Dependency <span class="ev-tag">NEGATIVE CONTROL</span></span>
+    <span class="ctrl-n" id="ctrl-dep-n">—</span>
+    <span class="ctrl-u">paths</span>
+  </button>
+  <p class="ctrl-verdict" id="ctrl-verdict">Same query. Two topologies.</p>
+</section>
+
 <main class="stage">
 
   <!-- ============ LEFT: spread across the trust topology ============ -->
@@ -158,7 +176,7 @@
 <footer class="evidence" aria-labelledby="ev-h">
   <div class="ev-title">
     <h2 id="ev-h">Evidence</h2>
-    <span class="ev-sub">same query · two topologies</span>
+    <span class="ev-sub">precision@K vs IOC validation — honest, including zero</span>
   </div>
 
   <div class="ev-grid">

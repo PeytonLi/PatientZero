@@ -63,10 +63,10 @@ EDGE_SPECS: tuple[tuple[str, str, str, str, str, str, bool], ...] = (
     ("edges_depends_on", "Version", "src_vid", "DEPENDS_ON", "Version", "dst_vid", True),
     ("edges_pins", "Service", "sid", "PINS", "Version", "dst_vid", True),
     ("edges_affects", "Advisory", "aid", "AFFECTS", "Version", "vid", False),
-    ("edges_maintains", "Maintainer", "mid", "MAINTAINS", "Package", "pid", False),
-    ("edges_published_from", "Package", "pid", "PUBLISHED_FROM", "Repo", "rid", False),
-    ("edges_has_workflow", "Repo", "rid", "HAS_WORKFLOW", "Workflow", "wid", False),
-    ("edges_publishes_via_oidc", "Workflow", "wid", "PUBLISHES_VIA_OIDC", "Package", "pid", False),
+    ("edges_maintains", "Maintainer", "mid", "MAINTAINS", "Package", "pid", True),
+    ("edges_published_from", "Package", "pid", "PUBLISHED_FROM", "Repo", "rid", True),
+    ("edges_has_workflow", "Repo", "rid", "HAS_WORKFLOW", "Workflow", "wid", True),
+    ("edges_publishes_via_oidc", "Workflow", "wid", "PUBLISHES_VIA_OIDC", "Package", "pid", True),
 )
 
 

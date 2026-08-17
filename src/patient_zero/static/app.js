@@ -677,6 +677,25 @@
         verdict.textContent = payload.note || "measured";
       }
     }
+
+    var trustN = $("ctrl-trust-n");
+    var depN = $("ctrl-dep-n");
+    var ctrlVerdict = $("ctrl-verdict");
+    var tPaths = payload && payload.trust_paths;
+    var dPaths = payload && payload.control_paths;
+    if (trustN) trustN.textContent = isNullish(tPaths) ? "—" : String(tPaths);
+    if (depN) depN.textContent = isNullish(dPaths) ? "—" : String(dPaths);
+    if (ctrlVerdict) {
+      if (isNullish(tPaths) && isNullish(dPaths)) {
+        ctrlVerdict.textContent = "Same query. Two topologies.";
+      } else if (Number(tPaths) > 0 && Number(dPaths) === 0) {
+        ctrlVerdict.textContent =
+          "Trust returned " + tPaths + " paths. Dependency returned 0. The worm is visible on trust edges and invisible on dependency edges.";
+      } else {
+        ctrlVerdict.textContent =
+          "Trust " + tPaths + " paths · dependency " + dPaths + " paths. Identical SSpaths, relTypes swapped.";
+      }
+    }
   }
 
   function renderLeverage(payload) {
@@ -699,10 +718,13 @@
     if (cut) {
       empty(cut);
       var blocked = payload && payload.stats && payload.stats.spread_blocked_pct;
-      var reachable = payload && payload.stats && payload.stats.reachable_validation;
+      var reachable = payload && payload.stats && payload.stats.reachable_neighborhood;
+      if (reachable == null) {
+        reachable = payload && payload.stats && payload.stats.reachable_validation;
+      }
       if (isNullish(blocked)) {
         if (reachable === 0) {
-          cut.appendChild(el("span", "ev-unmeasured", "greedy cover: 0 validation pids reachable"));
+          cut.appendChild(el("span", "ev-unmeasured", "greedy cover: 0 packages in the trust neighborhood"));
         } else {
           cut.appendChild(el("span", "ev-unmeasured", "min-cut % not yet measured"));
         }
@@ -853,7 +875,7 @@
       btn.addEventListener("click", function () {
         topology = btn.getAttribute("data-topology") || "trust";
         btns.forEach(function (b) {
-          b.classList.toggle("is-on", b === btn);
+          b.classList.toggle("is-on", b.getAttribute("data-topology") === topology);
         });
         document.body.classList.toggle("topo-trust", topology === "trust");
         document.body.classList.toggle("topo-dep", topology === "dependency");

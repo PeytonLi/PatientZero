@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import Any
 
 from patient_zero.advisories import advisory_tables
-from patient_zero.assemble import _split_pid, assemble
+from patient_zero.assemble import _split_pid, assemble, stamp_t2_windows
 from patient_zero.depends import depends_on_edges
 from patient_zero.expand import packages_from_search
 from patient_zero.merge import ensure_endpoint_nodes, merge_tables
@@ -98,4 +98,4 @@ def build_graph(
     tables["advisories"] = advisories
     tables["edges_affects"] = affects
     ensure_endpoint_nodes(tables)
-    return merge_tables(_empty(), tables)
+    return stamp_t2_windows(merge_tables(_empty(), tables))

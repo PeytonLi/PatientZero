@@ -20,6 +20,7 @@ POST_ROUTES = (
 GET_ROUTES = (
     "/api/leverage",
     "/api/evidence",
+    "/api/incident",
     "/api/timeline",
     "/api/meta",
 )
@@ -107,6 +108,8 @@ def test_health_and_static_index(client: TestClient) -> None:
     assert page.status_code == 200
     assert b"Patient" in page.content
     assert b"play-clock" in page.content
+    assert b"ctrl-h" in page.content
+    assert b"NEGATIVE CONTROL" in page.content
 
 
 def test_invalid_forecast_params_are_422(client: TestClient) -> None:
@@ -124,6 +127,14 @@ def test_all_envelopes_json_serialize(client: TestClient) -> None:
         json.dumps(client.get(path).json())
 
 
+def test_incident_exposes_may11_fixture(client: TestClient) -> None:
+    body = _assert_envelope(client.get("/api/incident").json())
+    assert body["id"] == "may11-tanstack"
+    assert body["window_start"] == 1778527200
+    assert body["true_origin"]["id"] == "npm:tannerlinsley"
+    assert body["ticks"]
+
+
 def test_meta_exposes_seed_pids_and_blast_with_a_version(client: TestClient) -> None:
     body = _assert_envelope(client.get("/api/meta").json())
     assert body["seed_pids"] == ["npm:@tanstack/react-query"]
@@ -131,6 +142,7 @@ def test_meta_exposes_seed_pids_and_blast_with_a_version(client: TestClient) -> 
     assert body["default_blast"]["version"] == "5.101.4"
     assert body["default_sid"] == "svc:app"
     assert body["finding_vids"] == []
+    assert body["incident_id"] == "may11-tanstack"
 
 
 def test_timeline_includes_ioc_nodes(client: TestClient) -> None:

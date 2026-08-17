@@ -11,7 +11,8 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
 from patient_zero.db import bolt_driver  # noqa: E402
-from patient_zero.engine import WORM_START, Engine  # noqa: E402
+from patient_zero.engine import Engine  # noqa: E402
+from patient_zero.incident import WORM_START  # noqa: E402
 
 AS_OF = WORM_START + 360  # 19:26
 K = 100

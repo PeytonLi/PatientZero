@@ -79,16 +79,24 @@ def test_build_graph_wires_trust_dependency_pins_and_advisory():
     pids = {r["pid"] for r in tables["packages"]}
     assert "npm:@tanstack/store" in pids
     assert "npm:@tanstack/query-core" in pids
-    assert {"mid": "npm:tannerlinsley", "pid": "npm:@tanstack/store"} in tables["edges_maintains"]
+    assert any(
+        r["mid"] == "npm:tannerlinsley" and r["pid"] == "npm:@tanstack/store"
+        for r in tables["edges_maintains"]
+    )
     assert tables["edges_depends_on"][0]["dst_vid"] == "npm:@tanstack/query-core@5.90.2"
     assert tables["services"][0]["sid"] == "svc:app"
     assert tables["edges_pins"][0]["dst_vid"] == "npm:@tanstack/react-query@5.90.2"
     assert tables["workflows"][0]["uses_pull_request_target"] is True
-    assert tables["edges_has_workflow"] == [
-        {"rid": "github:TanStack/query", "wid": "github:TanStack/query:.github/workflows/release.yml"}
-    ]
-    assert tables["edges_publishes_via_oidc"] == [
-        {"wid": "github:TanStack/query:.github/workflows/release.yml", "pid": "npm:@tanstack/react-query"}
-    ]
+    assert tables["edges_has_workflow"][0]["rid"] == "github:TanStack/query"
+    assert tables["edges_has_workflow"][0]["wid"] == (
+        "github:TanStack/query:.github/workflows/release.yml"
+    )
+    assert tables["edges_has_workflow"][0]["valid_from"] == 0
+    assert tables["edges_has_workflow"][0]["valid_to"] == SENTINEL_VALID_TO
+    assert tables["edges_publishes_via_oidc"][0]["wid"] == (
+        "github:TanStack/query:.github/workflows/release.yml"
+    )
+    assert tables["edges_publishes_via_oidc"][0]["pid"] == "npm:@tanstack/react-query"
+    assert tables["edges_publishes_via_oidc"][0]["valid_from"] == 0
     assert tables["advisories"][0]["aid"] == "ghsa:GHSA-g7cv-rxg3-hmpx"
     assert any(r["vid"] == "npm:@tanstack/react-query@5.90.2" for r in tables["edges_affects"])

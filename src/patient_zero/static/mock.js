@@ -547,7 +547,11 @@
           k: kL,
           max_hops: hopsL,
           result_limit: limit,
-          spread_blocked_pct: null
+          spread_blocked_pct: 1,
+          cover: "greedy",
+          cover_universe: "forecast_neighborhood",
+          reachable_neighborhood: 12,
+          reachable_validation: 0
         }
       }, 51);
     }
@@ -568,9 +572,35 @@
         }),
         r0_trust: null,
         r0_dependency: null,
+        trust_paths: 12,
+        control_paths: 0,
+        control_note: "identical SSpaths, relTypes swapped",
         note: "STUB: no validation has been run. Nulls are literal, not zeros.",
         stats: { measured: false, ioc_set_loaded: false }
       }, 61);
+    }
+
+    if (p === "/api/incident") {
+      return envelope("// incident fixture, not a traversal", {
+        id: "may11-tanstack",
+        title: "TanStack / Mini Shai-Hulud",
+        window_start: WORM_START,
+        window_end: T_END,
+        named_at: T26,
+        world_found_out_at: T46,
+        true_origin: { id: "npm:tannerlinsley", kind: "maintainer" },
+        default_blast: {
+          ecosystem: "npm",
+          name: "@tanstack/react-query",
+          version: "5.101.4"
+        },
+        default_sid: "svc:mattermost",
+        ticks: [
+          { at: WORM_START, label: "worm begins" },
+          { at: T26, label: "42 @tanstack/* packages compromised (seed set)" },
+          { at: T46, label: "first public detection (StepSecurity)" }
+        ]
+      }, 6);
     }
 
     if (p === "/api/timeline") {

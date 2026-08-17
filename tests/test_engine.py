@@ -111,6 +111,7 @@ def test_forecast_trust_ranks_co_maintained_package_not_in_seeds():
     assert body["predictions"][0]["pid"] == neighbour
     assert body["predictions"][0]["justification_path"] == [seed, mid, neighbour]
     assert body["stats"]["precision_at_k"] is None
+    assert body["stats"]["paths_returned"] == 1
 
 
 def test_forecast_dependency_is_negative_control_and_uses_t1_rels():
@@ -206,6 +207,9 @@ def test_evidence_precision_is_scored_against_validation_pids():
     assert body["precision_dependency"]["precision_at_10"] == 0.0
     assert body["r0_trust"] == 1.0
     assert body["r0_dependency"] == 0.0
+    assert body["trust_paths"] == 1
+    assert body["control_paths"] == 0
+    assert body["control_note"] == "identical SSpaths, relTypes swapped"
 
 
 def test_evidence_r0_is_mean_validation_pids_reached_per_seed():
@@ -312,6 +316,69 @@ def test_leverage_greedy_cover_ranks_the_maintainer_who_covers_more_validation_p
     covered = 3
     assert body["stats"]["spread_blocked_pct"] == round(covered / reachable, 4)
     assert body["stats"]["spread_blocked_pct"] == 1.0
+    assert body["stats"]["cover_universe"] == "forecast_neighborhood"
+    assert body["stats"]["reachable_neighborhood"] == 3
+    assert body["stats"]["reachable_validation"] == 3
+
+
+def test_leverage_mincut_covers_forecast_neighborhood_without_validation():
+    seed = "npm:seed-pkg"
+    neighbour = "npm:other-pkg"
+    wide = "npm:zzz-wide"
+    tables = deepcopy(TABLES)
+    tables["packages"] = [_pkg(seed), _pkg(neighbour)]
+    tables["maintainers"] = [_maint(wide)]
+    tables["edges_maintains"] = [
+        {"mid": wide, "pid": seed},
+        {"mid": wide, "pid": neighbour},
+    ]
+    ioc = [{"pid": seed, "split": "seed", "first_seen_utc": WORM}]
+    cat = Catalog.from_tables(tables, ioc_records=ioc)
+
+    def run(cypher: str, params: dict):
+        if "MAINTAINS" not in cypher:
+            return []
+        if params["sourceNode"] != hydra_id(seed):
+            return []
+        return [
+            FakePath(
+                [_node(seed, "Package"), _node(wide, "Maintainer"), _node(neighbour, "Package")],
+                [FakeRel("MAINTAINS"), FakeRel("MAINTAINS")],
+            )
+        ]
+
+    engine = Engine(catalog=cat, run_paths=run)
+    body = engine.leverage(k=5, max_hops=4, limit=50)
+    assert body["stats"]["reachable_validation"] == 0
+    assert body["stats"]["reachable_neighborhood"] == 1
+    assert body["mincut"][0]["id"] == wide
+    assert body["stats"]["spread_blocked_pct"] == 1.0
+
+
+def test_forecast_trust_drops_maintains_outside_the_window():
+    cat = Catalog.from_tables(TABLES, ioc_records=IOC)
+    seed = "npm:@tanstack/react-query"
+    neighbour = "npm:@tanstack/store"
+    mid = "npm:tannerlinsley"
+    future = FakePath(
+        [_node(seed, "Package"), _node(mid, "Maintainer"), _node(neighbour, "Package")],
+        [
+            FakeRel("MAINTAINS", vf=WORM + 10_000, vt=SENTINEL),
+            FakeRel("MAINTAINS", vf=WORM + 10_000, vt=SENTINEL),
+        ],
+    )
+
+    def run(cypher: str, params: dict):
+        if params["sourceNode"] == hydra_id(seed):
+            return [future]
+        return []
+
+    engine = Engine(catalog=cat, run_paths=run)
+    body = engine.forecast(
+        seeds=[seed], as_of=WORM + 360, k=10, topology="trust", max_hops=3, limit=50
+    )
+    assert body["predictions"] == []
+    assert body["stats"]["paths_returned"] == 0
 
 
 def test_timeline_nodes_come_from_ioc_first_seen():
@@ -323,6 +390,9 @@ def test_timeline_nodes_come_from_ioc_first_seen():
     assert by_id["npm:@tanstack/react-query"]["role"] == "origin"
     assert by_id["npm:@tanstack/store"]["role"] == "hit"
     assert by_id["npm:@tanstack/store"]["eco"] == "npm"
+    assert body["incident_id"] == "may11-tanstack"
+    assert body["window_start"] == WORM
+    assert body["events"][0]["label"] == "worm begins"
 
 
 def _pkg(pid: str) -> dict:

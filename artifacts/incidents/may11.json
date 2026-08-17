@@ -1,0 +1,25 @@
+{
+  "id": "may11-tanstack",
+  "title": "TanStack / Mini Shai-Hulud",
+  "window_start": 1778527200,
+  "window_end": 1778557800,
+  "named_at": 1778527560,
+  "world_found_out_at": 1778528760,
+  "true_origin": {
+    "id": "npm:tannerlinsley",
+    "kind": "maintainer"
+  },
+  "default_blast": {
+    "ecosystem": "npm",
+    "name": "@tanstack/react-query",
+    "version": "5.101.4"
+  },
+  "default_sid": "svc:mattermost",
+  "ticks": [
+    {"at": 1778527200, "label": "worm begins"},
+    {"at": 1778527560, "label": "42 @tanstack/* packages compromised (seed set)"},
+    {"at": 1778528760, "label": "first public detection (StepSecurity)"},
+    {"at": 1778543400, "label": "npm -> PyPI crossing"},
+    {"at": 1778557800, "label": "end of day: 170+ packages"}
+  ]
+}

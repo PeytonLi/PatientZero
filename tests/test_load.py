@@ -157,6 +157,36 @@ def test_load_graph_merges_edge_endpoints_missing_from_node_tables():
     assert hydra_id("github:mistralai/client-python") in repo_ids
 
 
+def test_load_graph_writes_bitemporal_maintains():
+    session = FakeSession()
+    tables = {
+        "packages": [{"pid": "npm:a", "ecosystem": "npm", "name": "a"}],
+        "versions": [],
+        "maintainers": [{"mid": "npm:t", "ecosystem": "npm", "login": "t"}],
+        "repos": [],
+        "workflows": [],
+        "services": [],
+        "advisories": [],
+        "edges_depends_on": [],
+        "edges_pins": [],
+        "edges_maintains": [
+            {"mid": "npm:t", "pid": "npm:a", "valid_from": 0, "valid_to": 4102444800}
+        ],
+        "edges_published_from": [],
+        "edges_has_workflow": [],
+        "edges_publishes_via_oidc": [],
+        "edges_affects": [],
+    }
+    load_graph(session, tables)
+    edge_q, edge_kw = next(
+        (q, kw) for q, kw in session.calls if ":MAINTAINS" in q and "CREATE" in q
+    )
+    assert "valid_from" in edge_q
+    assert edge_q.index("id: row.eid") < edge_q.index("valid_from")
+    assert edge_kw["rows"][0]["vf"] == 0
+    assert edge_kw["rows"][0]["vt"] == 4102444800
+
+
 def test_checkpoint_skips_already_written_batches(tmp_path: Path):
     tables = {
         "versions": [{"vid": f"npm:p@{i}"} for i in range(5)],

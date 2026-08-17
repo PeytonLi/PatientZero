@@ -8,6 +8,12 @@ from patient_zero.ids import mid, rid
 
 SENTINEL_VALID_TO = 4102444800  # 2100-01-01 UTC
 BOT_LOGINS = frozenset({"github actions", "npm", "dependabot", "greenkeeper"})
+T2_EDGE_TABLES = (
+    "edges_maintains",
+    "edges_published_from",
+    "edges_has_workflow",
+    "edges_publishes_via_oidc",
+)
 
 
 def is_human_login(login: str) -> bool:
@@ -24,6 +30,20 @@ def _version_of(vid_s: str, pid_s: str) -> str:
     if vid_s.startswith(prefix):
         return vid_s[len(prefix) :]
     return vid_s.rsplit("@", 1)[-1]
+
+
+def stamp_t2_windows(tables: dict[str, list[dict[str, Any]]]) -> dict[str, list[dict[str, Any]]]:
+    """Give T2 edges the same valid_from/valid_to columns T1 already has.
+
+    Packuments do not carry maintainer tenure. Stamp 0 → sentinel so the
+    bitemporal filter path exists; a later incident can overwrite with real
+    windows. Existing keys are left alone.
+    """
+    for name in T2_EDGE_TABLES:
+        for row in tables.get(name) or []:
+            row.setdefault("valid_from", 0)
+            row.setdefault("valid_to", SENTINEL_VALID_TO)
+    return tables
 
 
 def assemble(
@@ -78,15 +98,17 @@ def assemble(
             repos[repo_id] = {"rid": repo_id, "host": "github", "org": org, "name": repo_name}
             published_from.add((pid_s, repo_id))
 
-    return {
-        "packages": sorted(packages.values(), key=lambda r: r["pid"]),
-        "versions": sorted(versions.values(), key=lambda r: r["vid"]),
-        "maintainers": sorted(maintainers.values(), key=lambda r: r["login"]),
-        "repos": sorted(repos.values(), key=lambda r: r["rid"]),
-        "edges_maintains": [
-            {"mid": a, "pid": b} for a, b in sorted(maintains)
-        ],
-        "edges_published_from": [
-            {"pid": a, "rid": b} for a, b in sorted(published_from)
-        ],
-    }
+    return stamp_t2_windows(
+        {
+            "packages": sorted(packages.values(), key=lambda r: r["pid"]),
+            "versions": sorted(versions.values(), key=lambda r: r["vid"]),
+            "maintainers": sorted(maintainers.values(), key=lambda r: r["login"]),
+            "repos": sorted(repos.values(), key=lambda r: r["rid"]),
+            "edges_maintains": [
+                {"mid": a, "pid": b} for a, b in sorted(maintains)
+            ],
+            "edges_published_from": [
+                {"pid": a, "rid": b} for a, b in sorted(published_from)
+            ],
+        }
+    )

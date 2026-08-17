@@ -97,8 +97,9 @@ RETURN path
 
 `pathCount` must be ≥ 1. `0` returns min-hop only and misses 2-hop co-maintainers.
 T1 (dependency) uses `relTypes: ['DEPENDS_ON', 'PINS']`, `relDirection: 'incoming'`, and
-filters `valid_from` / `valid_to` on the client after the procedure returns. T2 rels have no
-`valid_from`; do not bitemporal-filter them.
+filters `valid_from` / `valid_to` on the client after the procedure returns. T2 rels
+carry the same columns (stamped `0 → 2100` until we have real tenure) and the
+forecast filters them the same way.
 
 Health is `verify_connectivity` only. Do not `count(*)` all Version nodes.
 UNWIND batches cap at 1024; the loader uses 1000. Query timeout is 30s. One writer.
@@ -107,8 +108,7 @@ Throughput probes: [`docs/MEASURED.md`](docs/MEASURED.md).
 
 ## Try it
 
-**Live demo (Render):** after you apply the Blueprint, the service URL is
-`https://patient-zero.onrender.com` (exact subdomain is shown in the dashboard).
+**Live demo:** [https://patient-zero-me3t.onrender.com](https://patient-zero-me3t.onrender.com)
 
 [![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/PeytonLi/PatientZero)
 
@@ -143,6 +143,7 @@ Serve from that URL. Opening `src/patient_zero/static/index.html` via `file://` 
 
 ## Documentation
 
+- [`docs/ROADMAP.md`](docs/ROADMAP.md) — product bets after the hackathon
 - [`docs/DESIGN.md`](docs/DESIGN.md) — the design spec
 - [`docs/HANDOFF.md`](docs/HANDOFF.md) — constraints, interface contracts, schedule
 - [`docs/MEASURED.md`](docs/MEASURED.md) — measured HydraDB throughput and the slice budget

@@ -1,9 +1,9 @@
 """Bounded algo.SSpaths in three time directions. Join names from the catalog.
 
 HydraDB 0.1.0 SSpaths takes integer `$sourceNode` (the hydra_id). Path nodes
-come back with empty properties; identity is `element_id`. T1 bitemporal
-filters run on relationship properties after the procedure returns — the
-server rejects MATCH+CALL and `WHERE all(r IN relationships(path) ...)`.
+come back with empty properties; identity is `element_id`. T1 and T2
+bitemporal filters run on relationship properties after the procedure
+returns — the server rejects MATCH+CALL and `WHERE all(r IN relationships(path) ...)`.
 """
 
 from __future__ import annotations
@@ -19,12 +19,9 @@ from typing import Any, Callable
 from .catalog import Catalog
 from .cypher import T1_RELS, T2_RELS, ss_paths
 from .ids import hydra_id
+from .incident import SENTINEL_VALID_TO, WORM_START, Incident
 
 log = logging.getLogger("patient_zero.engine")
-
-WORM_START = 1778527200
-SENTINEL_VALID_TO = 4102444800
-TRUE_ORIGIN_MID = "npm:tannerlinsley"  # TanStack postmortem; used only to rank, never as a seed
 
 RunPaths = Callable[[str, dict[str, Any]], list[Any]]
 _KIND = {"Maintainer": "maintainer", "Repo": "repo", "Workflow": "workflow", "Service": "service"}
@@ -190,9 +187,15 @@ class DecodedPath:
 
 
 class Engine:
-    def __init__(self, catalog: Catalog, run_paths: RunPaths):
+    def __init__(
+        self,
+        catalog: Catalog,
+        run_paths: RunPaths,
+        incident: Incident | None = None,
+    ):
         self.catalog = catalog
         self.run_paths = run_paths
+        self.incident = incident or Incident.may11()
         self._forecast_lock = threading.Lock()
         self._key_locks: dict[tuple[Any, ...], threading.Lock] = {}
         self._read_sema = threading.Semaphore(READ_WORKERS)
@@ -211,6 +214,7 @@ class Engine:
         graph_dir: Path | None = None,
         ioc_path: Path | None = None,
         run_paths: RunPaths | None = None,
+        incident: Incident | None = None,
     ) -> Engine:
         from .paths import graph_dir as default_graph_dir, ioc_path as default_ioc_path
 
@@ -218,7 +222,11 @@ class Engine:
             graph_dir or default_graph_dir(),
             ioc_path or default_ioc_path(),
         )
-        return cls(catalog, run_paths=run_paths or _bolt_run_once)
+        return cls(
+            catalog,
+            run_paths=run_paths or _bolt_run_once,
+            incident=incident or Incident.from_env(),
+        )
 
     def decode(self, path: Any) -> DecodedPath | None:
         nodes = list(getattr(path, "nodes", path))
@@ -406,26 +414,30 @@ class Engine:
         entity_kind: dict[str, str] = {}
         entity_path: dict[str, list[str]] = {}
 
-        def walk(src: str) -> list[tuple]:
+        def walk(src: str) -> tuple[int, list[tuple]]:
             src_pid = src
             if not trust:
                 rec = self.catalog.rec(src)
                 src_pid = (rec.row.get("pid") if rec else None) or src
             hits: list[tuple] = []
+            n_paths = 0
             for raw in self._safe_paths(cypher, src):
                 decoded = self.decode(raw)
                 if decoded is None:
                     continue
-                if not trust and not decoded.in_window(as_of):
+                if not decoded.in_window(as_of):
                     continue
+                n_paths += 1
                 cand = self._forecast_candidate(decoded, seed_set, trust)
                 if not cand:
                     continue
                 entity, label = _shared_on_path(decoded)
                 hits.append((src_pid, cand, _path_weight(decoded, self.catalog), decoded.stables, entity, label))
-            return hits
+            return n_paths, hits
 
-        for hits in self._map_sources(sources, walk):
+        paths_kept = 0
+        for n_paths, hits in self._map_sources(sources, walk):
+            paths_kept += n_paths
             for src_pid, cand, weight, stables, entity, label in hits:
                 scores[cand] += weight
                 if weight >= best_w.get(cand, float("-inf")):
@@ -458,6 +470,7 @@ class Engine:
                 "result_limit": bound,
                 "as_of": as_of,
                 "precision_at_k": None,
+                "paths_returned": paths_kept,
             },
         }
         self._forecast_cache[cache_key] = body
@@ -573,7 +586,7 @@ class Engine:
             )
         true_origin_rank = None
         for i, cand in enumerate(candidates, 1):
-            if cand["id"] == TRUE_ORIGIN_MID:
+            if cand["id"] == self.incident.true_origin_id:
                 true_origin_rank = i
                 break
         return {
@@ -642,7 +655,7 @@ class Engine:
 
     def leverage(self, *, k: int, max_hops: int, limit: int) -> dict[str, Any]:
         seeds = sorted(self.catalog.seed_pids)
-        as_of = WORM_START + 360
+        as_of = self.incident.named_at
         measure_k = max(k, 100)
         measure_hops = 3
         trust = self.forecast(
@@ -675,7 +688,8 @@ class Engine:
                     "login": rec.name if rec else eid,
                 }
             )
-        universe = {pid for pid in covers if pid in self.catalog.validation_pids}
+        universe = set(covers)
+        validation_hit = {pid for pid in covers if pid in self.catalog.validation_pids}
         mincut, blocked = _greedy_cover(covers, universe, kinds)
         return {
             "cypher": trust["cypher"],
@@ -687,11 +701,15 @@ class Engine:
                 "result_limit": _bound(limit, k),
                 "spread_blocked_pct": blocked,
                 "cover": "greedy",
-                "reachable_validation": len(universe),
+                "cover_universe": "forecast_neighborhood",
+                "reachable_neighborhood": len(universe),
+                "reachable_validation": len(validation_hit),
             },
         }
 
-    def evidence(self, *, k: int = 100, as_of: int = WORM_START + 360) -> dict[str, Any]:
+    def evidence(self, *, k: int = 100, as_of: int | None = None) -> dict[str, Any]:
+        if as_of is None:
+            as_of = self.incident.named_at
         key = (k, as_of)
         cached = self._evidence_cache.get(key)
         if cached is not None:
@@ -722,6 +740,19 @@ class Engine:
             )
         )
         seeds = sorted(self.catalog.seed_pids)
+
+        def control_fields(
+            trust_body: dict[str, Any] | None = None,
+            dep_body: dict[str, Any] | None = None,
+        ) -> dict[str, Any]:
+            trust_n = (trust_body or {}).get("stats", {}).get("paths_returned", 0)
+            dep_n = (dep_body or {}).get("stats", {}).get("paths_returned", 0)
+            return {
+                "trust_paths": int(trust_n or 0),
+                "control_paths": int(dep_n or 0),
+                "control_note": "identical SSpaths, relTypes swapped",
+            }
+
         if not seeds or not self.catalog.validation_pids:
             body = {
                 "cypher": cypher,
@@ -733,6 +764,7 @@ class Engine:
                 "r0_dependency": None,
                 "note": "IOC split missing; precision is not invented.",
                 "stats": {"measured": False, "ioc_set_loaded": False},
+                **control_fields(),
             }
             self._evidence_cache[key] = body
             return copy.deepcopy(body)
@@ -753,6 +785,7 @@ class Engine:
                 "r0_dependency": None,
                 "note": "No forecast paths returned; precision is not invented.",
                 "stats": {"measured": False, "ioc_set_loaded": True},
+                **control_fields(trust, dep),
             }
             self._evidence_cache[key] = body
             return copy.deepcopy(body)
@@ -805,6 +838,7 @@ class Engine:
                 "validation_pids": len(truth),
                 "r0_definition": "mean validation pids reached per seed",
             },
+            **control_fields(trust, dep),
         }
         self._evidence_cache[key] = body
         return copy.deepcopy(body)
@@ -815,15 +849,10 @@ class Engine:
             "/* Version.published_at is not stored on HydraDB nodes */"
         )
         records = self.catalog.ioc_records
-        ticks = (
-            (WORM_START, "worm begins"),
-            (WORM_START + 360, "42 @tanstack/* packages compromised (seed set)"),
-            (WORM_START + 1560, "first public detection (StepSecurity)"),
-            (WORM_START + 16200, "npm -> PyPI crossing"),
-            (WORM_START + 30600, "end of day: 170+ packages"),
-        )
+        ticks = self.incident.ticks
         events = []
-        for at, label in ticks:
+        for tick in ticks:
+            at, label = tick.at, tick.label
             pids = {
                 row["pid"]
                 for row in records
@@ -860,8 +889,9 @@ class Engine:
             "cypher": cypher,
             "events": events,
             "nodes": nodes,
-            "window_start": WORM_START,
-            "window_end": WORM_START + 30600,
+            "window_start": self.incident.window_start,
+            "window_end": self.incident.window_end,
+            "incident_id": self.incident.id,
             "stats": {
                 "ticks": len(events),
                 "counts_are_stub": not bool(records),
@@ -898,10 +928,17 @@ class Engine:
         finding_vids.sort(key=lambda row: (row["at"], row["vid"]))
         return {
             "cypher": "// catalog lookup, not a traversal",
+            "incident_id": self.incident.id,
             "default_blast": {"ecosystem": eco, "name": name, "version": version},
             "default_sid": sid,
             "seed_pids": sorted(self.catalog.seed_pids),
             "finding_vids": finding_vids,
+        }
+
+    def incident_payload(self) -> dict[str, Any]:
+        return {
+            "cypher": "// incident fixture, not a traversal",
+            **self.incident.as_dict(),
         }
 
 

@@ -22,7 +22,8 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
 from .db import HEALTH_CYPHER, bolt_driver, graph_loaded, ping as hydradb_ping
-from .engine import Engine, SENTINEL_VALID_TO, WORM_START
+from .engine import Engine
+from .incident import SENTINEL_VALID_TO, WORM_START
 
 log = logging.getLogger("patient_zero.api")
 
@@ -213,6 +214,12 @@ def leverage(k: int = 5, max_hops: int = 4, limit: int = 500) -> dict[str, Any]:
 def evidence() -> dict[str, Any]:
     engine = get_engine()
     return _timed("", lambda: engine.evidence())
+
+
+@app.get("/api/incident")
+def incident() -> dict[str, Any]:
+    engine = get_engine()
+    return _timed("", lambda: engine.incident_payload())
 
 
 @app.get("/api/timeline")

@@ -38,19 +38,19 @@
     },
     "edges_maintains.parquet": {
       "rows": 4023,
-      "bytes": 15583
+      "bytes": 16211
     },
     "edges_published_from.parquet": {
       "rows": 150,
-      "bytes": 3379
+      "bytes": 4003
     },
     "edges_has_workflow.parquet": {
       "rows": 88,
-      "bytes": 2965
+      "bytes": 3589
     },
     "edges_publishes_via_oidc.parquet": {
       "rows": 106,
-      "bytes": 2248
+      "bytes": 2872
     },
     "edges_affects.parquet": {
       "rows": 84,

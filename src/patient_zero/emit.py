@@ -9,6 +9,8 @@ from typing import Any
 import pyarrow as pa
 import pyarrow.parquet as pq
 
+from patient_zero.assemble import stamp_t2_windows
+
 GRAPH_FILES = (
     "packages.parquet",
     "versions.parquet",
@@ -81,15 +83,19 @@ SCHEMAS: dict[str, pa.Schema] = {
     ]),
     "edges_maintains": pa.schema([
         ("mid", pa.string()), ("pid", pa.string()),
+        ("valid_from", pa.int64()), ("valid_to", pa.int64()),
     ]),
     "edges_published_from": pa.schema([
         ("pid", pa.string()), ("rid", pa.string()),
+        ("valid_from", pa.int64()), ("valid_to", pa.int64()),
     ]),
     "edges_has_workflow": pa.schema([
         ("rid", pa.string()), ("wid", pa.string()),
+        ("valid_from", pa.int64()), ("valid_to", pa.int64()),
     ]),
     "edges_publishes_via_oidc": pa.schema([
         ("wid", pa.string()), ("pid", pa.string()),
+        ("valid_from", pa.int64()), ("valid_to", pa.int64()),
     ]),
     "edges_affects": pa.schema([
         ("aid", pa.string()), ("vid", pa.string()),
@@ -106,8 +112,18 @@ def _table(key: str, rows: list[dict[str, Any]]) -> pa.Table:
     return pa.Table.from_pylist(aligned, schema=schema)
 
 
+def read_graph(graph_dir: Path) -> dict[str, list[dict[str, Any]]]:
+    tables: dict[str, list[dict[str, Any]]] = {}
+    for filename, key in _TABLE_KEY.items():
+        path = graph_dir / filename
+        if path.is_file():
+            tables[key] = pq.read_table(path).to_pylist()
+    return tables
+
+
 def write_graph(out_dir: Path, tables: dict[str, list[dict[str, Any]]]) -> dict[str, Any]:
     out_dir.mkdir(parents=True, exist_ok=True)
+    tables = stamp_t2_windows(dict(tables))
     files: dict[str, dict[str, int]] = {}
     for filename in GRAPH_FILES:
         key = _TABLE_KEY[filename]

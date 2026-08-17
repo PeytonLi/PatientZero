@@ -68,8 +68,18 @@ def test_assemble_drops_bot_maintainers_and_links_humans():
     assert "GitHub Actions" not in logins
     assert logins == ["tannerlinsley", "tkdodo"]
     assert g["edges_maintains"] == [
-        {"mid": mid("npm", "tannerlinsley"), "pid": pid("npm", "@tanstack/query-core")},
-        {"mid": mid("npm", "tkdodo"), "pid": pid("npm", "@tanstack/query-core")},
+        {
+            "mid": mid("npm", "tannerlinsley"),
+            "pid": pid("npm", "@tanstack/query-core"),
+            "valid_from": 0,
+            "valid_to": SENTINEL_VALID_TO,
+        },
+        {
+            "mid": mid("npm", "tkdodo"),
+            "pid": pid("npm", "@tanstack/query-core"),
+            "valid_from": 0,
+            "valid_to": SENTINEL_VALID_TO,
+        },
     ]
 
 
@@ -81,7 +91,12 @@ def test_assemble_joins_packument_hooks_and_repo():
     assert version["published_at"] == 1778527239
     assert g["repos"] == [{"rid": "github:TanStack/query", "host": "github", "org": "TanStack", "name": "query"}]
     assert g["edges_published_from"] == [
-        {"pid": "npm:@tanstack/query-core", "rid": "github:TanStack/query"}
+        {
+            "pid": "npm:@tanstack/query-core",
+            "rid": "github:TanStack/query",
+            "valid_from": 0,
+            "valid_to": SENTINEL_VALID_TO,
+        }
     ]
 
 

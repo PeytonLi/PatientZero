@@ -66,3 +66,7 @@ def test_write_graph_emits_all_contract_files_and_manifest(tmp_path: Path):
     deps = pq.read_table(tmp_path / "edges_depends_on.parquet")
     assert None not in deps.to_pydict()["valid_to"]
     assert deps.to_pydict()["valid_to"] == [SENTINEL_VALID_TO]
+    maintains = pq.read_table(tmp_path / "edges_maintains.parquet")
+    assert maintains.column_names == ["mid", "pid", "valid_from", "valid_to"]
+    assert maintains.to_pydict()["valid_from"] == [0]
+    assert maintains.to_pydict()["valid_to"] == [SENTINEL_VALID_TO]
