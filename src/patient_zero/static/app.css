@@ -577,6 +577,31 @@ body::before {
   padding: 0.08rem 0.35rem;
 }
 
+.expand-btn {
+  font-family: var(--font-display);
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  background: transparent;
+  color: var(--mute);
+  border: 1px solid var(--line-strong);
+  padding: 0.14rem 0.45rem;
+  cursor: pointer;
+}
+.expand-btn:hover:not(:disabled),
+.expand-btn:focus-visible {
+  color: var(--ink);
+  border-color: var(--manila);
+}
+.expand-btn:focus-visible {
+  outline: 2px solid var(--trust);
+  outline-offset: 1px;
+}
+.expand-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
 .panel-body {
   padding: 0.4rem 0.7rem 0.35rem 0.8rem;
   overflow: auto;
@@ -748,6 +773,7 @@ body.topo-dep .map-node.role-pred circle { stroke: var(--dep); }
   gap: 0.4rem;
   flex-wrap: wrap;
 }
+.hit[role="button"] { cursor: pointer; }
 .hit-name {
   font-family: var(--font-mono);
   font-size: 0.72rem;
@@ -842,6 +868,21 @@ body.topo-dep .hit-score { color: var(--dep); }
   background: var(--dep);
   color: var(--ink);
 }
+.seg .rank-btn {
+  font-family: var(--font-display);
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  background: transparent;
+  color: var(--mute);
+  border: 0;
+  padding: 0.22rem 0.45rem;
+  cursor: pointer;
+}
+.seg .rank-btn.is-on {
+  background: var(--manila);
+  color: var(--ink);
+}
 .seg-note {
   font-family: var(--font-mono);
   font-size: 0.5rem;
@@ -913,6 +954,11 @@ body.topo-dep .hit-score { color: var(--dep); }
   border: 1px solid var(--line-strong);
   padding: 0.15rem 0.4rem;
   font-size: 0.72rem;
+  cursor: pointer;
+}
+.lev-item:hover,
+.hit[role="button"]:hover {
+  border-color: var(--trust);
 }
 .lev-item strong {
   font-family: var(--font-mono);

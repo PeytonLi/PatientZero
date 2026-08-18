@@ -60,6 +60,7 @@ class ForecastReq(BaseModel):
     as_of: int = WORM_START + 360
     k: int = Field(default=10, ge=1, le=500)
     topology: Literal["trust", "dependency"] = "trust"
+    rank: Literal["rarity", "popularity"] = "rarity"
     max_hops: int = Field(default=3, ge=1, le=20)
     limit: int = Field(default=500, ge=1, le=5000)
 
@@ -76,6 +77,11 @@ class ReachabilityReq(BaseModel):
     sid: str = "svc:mattermost"
     finding_vids: list[str] = Field(default_factory=list)
     as_of: int = WORM_START + 360
+
+
+class ExpandReq(BaseModel):
+    id: str = ""
+    search: dict[str, Any] | None = None
 
 
 def _bolt_runner(driver):
@@ -170,6 +176,7 @@ def forecast(req: ForecastReq) -> dict[str, Any]:
             as_of=req.as_of,
             k=req.k,
             topology=req.topology,
+            rank=req.rank,
             max_hops=req.max_hops,
             limit=req.limit,
         ),
@@ -220,6 +227,18 @@ def evidence() -> dict[str, Any]:
 def incident() -> dict[str, Any]:
     engine = get_engine()
     return _timed("", lambda: engine.incident_payload())
+
+
+@app.get("/api/identity")
+def identity(id: str = "") -> dict[str, Any]:
+    engine = get_engine()
+    return _timed("", lambda: engine.identity(stable_id=id))
+
+
+@app.post("/api/expand")
+def expand(req: ExpandReq) -> dict[str, Any]:
+    engine = get_engine()
+    return _timed("", lambda: engine.expand(stable_id=req.id, search=req.search))
 
 
 @app.get("/api/timeline")

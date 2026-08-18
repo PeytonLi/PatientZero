@@ -16,11 +16,13 @@ POST_ROUTES = (
     "/api/forecast",
     "/api/index-case",
     "/api/reachability",
+    "/api/expand",
 )
 GET_ROUTES = (
     "/api/leverage",
     "/api/evidence",
     "/api/incident",
+    "/api/identity",
     "/api/timeline",
     "/api/meta",
 )
@@ -90,6 +92,13 @@ def test_forecast_dependency_is_negative_control(client: TestClient) -> None:
     assert "MAINTAINS" not in body["cypher"]
 
 
+def test_forecast_accepts_popularity_rank(client: TestClient) -> None:
+    body = _assert_envelope(
+        client.post("/api/forecast", json={"rank": "popularity"}).json()
+    )
+    assert body["stats"]["rank"] == "popularity"
+
+
 def test_health_and_static_index(client: TestClient) -> None:
     health = _assert_envelope(client.get("/api/health").json())
     assert health["ok"] is True
@@ -110,12 +119,17 @@ def test_health_and_static_index(client: TestClient) -> None:
     assert b"play-clock" in page.content
     assert b"ctrl-h" in page.content
     assert b"NEGATIVE CONTROL" in page.content
+    assert b"p-identity" in page.content
+    assert b"if this credential is stolen" in page.content
+    assert b'data-rank="popularity"' in page.content
+    assert b'id="identity-expand"' in page.content
 
 
 def test_invalid_forecast_params_are_422(client: TestClient) -> None:
     assert client.post("/api/forecast", json={"topology": "social"}).status_code == 422
     assert client.post("/api/forecast", json={"k": 0}).status_code == 422
     assert client.post("/api/forecast", json={"max_hops": 0}).status_code == 422
+    assert client.post("/api/forecast", json={"rank": "social"}).status_code == 422
 
 
 def test_all_envelopes_json_serialize(client: TestClient) -> None:
@@ -125,6 +139,30 @@ def test_all_envelopes_json_serialize(client: TestClient) -> None:
         json.dumps(client.post(path, json={}).json())
     for path in GET_ROUTES + ("/api/health",):
         json.dumps(client.get(path).json())
+
+
+def test_identity_route_returns_found_maintainer(client: TestClient) -> None:
+    body = _assert_envelope(client.get("/api/identity", params={"id": "npm:tannerlinsley"}).json())
+    assert body["found"] is True
+    assert body["kind"] == "maintainer"
+    assert body["packages"]
+
+
+def test_expand_route_merges_injected_search(client: TestClient) -> None:
+    body = _assert_envelope(
+        client.post(
+            "/api/expand",
+            json={
+                "id": "npm:tannerlinsley",
+                "search": {
+                    "objects": [{"package": {"name": "@tanstack/query-core"}}]
+                },
+            },
+        ).json()
+    )
+    assert body["found"] is True
+    assert body["added"] == 1
+    assert any(row["pid"] == "npm:@tanstack/query-core" for row in body["packages"])
 
 
 def test_incident_exposes_may11_fixture(client: TestClient) -> None:

@@ -457,6 +457,58 @@ def test_forecast_rare_maintainer_outranks_popular_at_the_same_path_count():
     assert body["predictions"][0]["score"] > body["predictions"][1]["score"]
 
 
+def test_forecast_popularity_rank_inverts_exclusivity():
+    seed = "npm:seed-pkg"
+    popular = "npm:aaa-popular"
+    rare = "npm:zzz-rare"
+    via_popular = "npm:aaa-via-popular"
+    via_rare = "npm:zzz-via-rare"
+    tables = deepcopy(TABLES)
+    tables["packages"] = [
+        _pkg(seed),
+        _pkg(via_popular),
+        _pkg(via_rare),
+        *[_pkg(f"npm:dummy-{i}") for i in range(20)],
+    ]
+    tables["maintainers"] = [_maint(popular), _maint(rare)]
+    tables["edges_maintains"] = [
+        {"mid": popular, "pid": seed},
+        {"mid": popular, "pid": via_popular},
+        *[{"mid": popular, "pid": f"npm:dummy-{i}"} for i in range(20)],
+        {"mid": rare, "pid": seed},
+        {"mid": rare, "pid": via_rare},
+    ]
+    cat = Catalog.from_tables(tables, ioc_records=[{"pid": seed, "split": "seed", "first_seen_utc": WORM}])
+
+    def run(cypher: str, params: dict):
+        if params["sourceNode"] != hydra_id(seed):
+            return []
+        return [
+            FakePath(
+                [_node(seed, "Package"), _node(popular, "Maintainer"), _node(via_popular, "Package")],
+                [FakeRel("MAINTAINS"), FakeRel("MAINTAINS")],
+            ),
+            FakePath(
+                [_node(seed, "Package"), _node(rare, "Maintainer"), _node(via_rare, "Package")],
+                [FakeRel("MAINTAINS"), FakeRel("MAINTAINS")],
+            ),
+        ]
+
+    engine = Engine(catalog=cat, run_paths=run)
+    body = engine.forecast(
+        seeds=[seed],
+        as_of=WORM + 360,
+        k=10,
+        topology="trust",
+        max_hops=3,
+        limit=50,
+        rank="popularity",
+    )
+    ranked = [row["pid"] for row in body["predictions"]]
+    assert ranked[0] == via_popular
+    assert body["stats"]["rank"] == "popularity"
+
+
 def test_forecast_oidc_workflow_path_beats_plain_maintains():
     """Vector is 2 when the path includes a pull_request_target / OIDC workflow."""
     seed = "npm:seed-pkg"

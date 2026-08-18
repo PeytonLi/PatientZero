@@ -9,6 +9,7 @@ returns — the server rejects MATCH+CALL and `WHERE all(r IN relationships(path
 from __future__ import annotations
 
 import copy
+import json
 import logging
 import threading
 from collections import defaultdict
@@ -18,6 +19,7 @@ from typing import Any, Callable
 
 from .catalog import Catalog
 from .cypher import T1_RELS, T2_RELS, ss_paths
+from .expand import packages_from_search
 from .ids import hydra_id
 from .incident import SENTINEL_VALID_TO, WORM_START, Incident
 
@@ -94,16 +96,19 @@ def _shared_on_path(decoded: DecodedPath) -> tuple[str | None, str]:
     return None, ""
 
 
-def _path_weight(decoded: DecodedPath, catalog: Catalog) -> float:
+def _path_weight(decoded: DecodedPath, catalog: Catalog, rank: str = "rarity") -> float:
     entity, _label = _shared_on_path(decoded)
     deg = catalog.degree(entity) if entity else 1
-    return (1.0 / deg) * _path_vector(decoded, catalog)
+    vector = _path_vector(decoded, catalog)
+    if rank == "popularity":
+        return float(deg) * vector
+    return (1.0 / deg) * vector
 
 
 def _forecast_key(
-    topology: str, seed_list: list[str], as_of: int, k: int, max_hops: int, limit: int
+    topology: str, seed_list: list[str], as_of: int, k: int, max_hops: int, limit: int, rank: str = "rarity"
 ) -> tuple[Any, ...]:
-    return (topology, tuple(seed_list), as_of, k, max_hops, _bound(limit, k))
+    return (topology, tuple(seed_list), as_of, k, max_hops, _bound(limit, k), rank)
 
 
 def _mean_validation_hits(
@@ -192,10 +197,12 @@ class Engine:
         catalog: Catalog,
         run_paths: RunPaths,
         incident: Incident | None = None,
+        searches_dir: Path | None = None,
     ):
         self.catalog = catalog
         self.run_paths = run_paths
         self.incident = incident or Incident.may11()
+        self.searches_dir = searches_dir
         self._forecast_lock = threading.Lock()
         self._key_locks: dict[tuple[Any, ...], threading.Lock] = {}
         self._read_sema = threading.Semaphore(READ_WORKERS)
@@ -344,11 +351,13 @@ class Engine:
         topology: str,
         max_hops: int,
         limit: int,
+        rank: str = "rarity",
     ) -> dict[str, Any]:
         seed_list = self._resolve_ids(seeds)
         seed_set = set(seed_list)
         trust = topology == "trust"
-        cache_key = _forecast_key(topology, seed_list, as_of, k, max_hops, limit)
+        rank = rank if rank in ("rarity", "popularity") else "rarity"
+        cache_key = _forecast_key(topology, seed_list, as_of, k, max_hops, limit, rank)
         cached = self._forecast_cache.get(cache_key)
         if cached is not None:
             return copy.deepcopy(cached)
@@ -365,6 +374,7 @@ class Engine:
                 k=k,
                 max_hops=max_hops,
                 limit=limit,
+                rank=rank,
                 cache_key=cache_key,
             )
             return copy.deepcopy(body)
@@ -380,6 +390,7 @@ class Engine:
         k: int,
         max_hops: int,
         limit: int,
+        rank: str,
         cache_key: tuple[Any, ...],
     ) -> dict[str, Any]:
         bound = _bound(limit, k)
@@ -432,7 +443,7 @@ class Engine:
                 if not cand:
                     continue
                 entity, label = _shared_on_path(decoded)
-                hits.append((src_pid, cand, _path_weight(decoded, self.catalog), decoded.stables, entity, label))
+                hits.append((src_pid, cand, _path_weight(decoded, self.catalog, rank), decoded.stables, entity, label))
             return n_paths, hits
 
         paths_kept = 0
@@ -471,6 +482,7 @@ class Engine:
                 "as_of": as_of,
                 "precision_at_k": None,
                 "paths_returned": paths_kept,
+                "rank": rank,
             },
         }
         self._forecast_cache[cache_key] = body
@@ -934,6 +946,110 @@ class Engine:
             "seed_pids": sorted(self.catalog.seed_pids),
             "finding_vids": finding_vids,
         }
+
+    def identity(self, *, stable_id: str) -> dict[str, Any]:
+        cypher = "// catalog join plus leverage neighborhood, not a new traversal"
+        rec = self.catalog.rec(stable_id)
+        if rec is None:
+            return {
+                "cypher": cypher,
+                "found": False,
+                "id": stable_id,
+                "packages": [],
+            }
+        packages = self.catalog.packages_touched(stable_id)
+        aliases = self.catalog.aliases(stable_id)
+        alias_packages = [
+            row
+            for alias in aliases
+            for row in self.catalog.packages_touched(alias["id"])
+        ]
+        registries = sorted(
+            set(self.catalog.registries_for(stable_id))
+            | {
+                row["ecosystem"]
+                for row in alias_packages
+                if row.get("ecosystem")
+            }
+        )
+        lev = self.leverage(k=100, max_hops=3, limit=100)
+        ranked = next((row for row in lev["ranked"] if row["id"] == stable_id), None)
+        cut = next((row for row in lev["mincut"] if row["id"] == stable_id), None)
+        return {
+            "cypher": lev["cypher"] if ranked else cypher,
+            "found": True,
+            "id": stable_id,
+            "kind": _KIND.get(rec.label, rec.label.lower()),
+            "name": rec.name,
+            "packages": packages,
+            "aliases": aliases,
+            "registries": registries,
+            "packages_at_risk": ranked["packages_at_risk"] if ranked else 0,
+            "action": cut["action"] if cut else None,
+            "path": ranked["path"] if ranked else [stable_id],
+        }
+
+    def expand(
+        self,
+        *,
+        stable_id: str,
+        search: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        cypher = "// catalog merge from maintainer search, not a traversal"
+        rec = self.catalog.rec(stable_id)
+        empty = {
+            "cypher": cypher,
+            "found": False,
+            "id": stable_id,
+            "added": 0,
+            "packages": [],
+        }
+        if rec is None:
+            return empty
+        packages = self.catalog.packages_touched(stable_id)
+        if rec.label != "Maintainer":
+            return {
+                "cypher": cypher,
+                "found": True,
+                "id": stable_id,
+                "added": 0,
+                "packages": packages,
+            }
+        login = str(rec.row.get("login") or rec.name or "")
+        eco = str(rec.row.get("ecosystem") or stable_id.partition(":")[0] or "npm")
+        payload = search if search is not None else self._cached_search(login)
+        if not payload:
+            return {
+                "cypher": cypher,
+                "found": True,
+                "id": stable_id,
+                "added": 0,
+                "packages": packages,
+            }
+        added = self.catalog.ingest_maintains(
+            packages_from_search(payload, login=login, ecosystem=eco)
+        )
+        return {
+            "cypher": cypher,
+            "found": True,
+            "id": stable_id,
+            "added": added,
+            "packages": self.catalog.packages_touched(stable_id),
+        }
+
+    def _cached_search(self, login: str) -> dict[str, Any] | None:
+        if not login:
+            return None
+        root = self.searches_dir
+        if root is None:
+            from .paths import repo_root
+
+            root = repo_root() / "data" / "npm-search"
+        path = root / f"{login.replace('/', '_')}.json"
+        if not path.is_file():
+            return None
+        payload = json.loads(path.read_text(encoding="utf-8"))
+        return payload if isinstance(payload, dict) else None
 
     def incident_payload(self) -> dict[str, Any]:
         return {

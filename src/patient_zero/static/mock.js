@@ -19,6 +19,7 @@
   var T_CROSS = WORM_START + 1620; // 19:47 — first PyPI node, after "the world found out"
   var T_END = WORM_START + 30600;
   var LIVE_DEFAULT = "http://127.0.0.1:8080";
+  var expandedPackages = {};
 
   // --- published-record seed names (HANDOFF §5). Compromise times are synthetic ticks. ---
   var SEED_PACKAGES = [
@@ -413,7 +414,8 @@
           max_hops: hopsF,
           result_limit: limit,
           as_of: asOf,
-          precision_at_k: null
+          precision_at_k: null,
+          rank: b.rank === "popularity" ? "popularity" : "rarity"
         }
       }, trust ? 21 : 22);
     }
@@ -601,6 +603,79 @@
           { at: T46, label: "first public detection (StepSecurity)" }
         ]
       }, 6);
+    }
+
+    if (p === "/api/identity") {
+      var raw = String(path).split("?")[1] || "";
+      var id = "";
+      raw.split("&").forEach(function (pair) {
+        var kv = pair.split("=");
+        if (decodeURIComponent(kv[0] || "") === "id") {
+          id = decodeURIComponent(kv[1] || "");
+        }
+      });
+      var known = {
+        "npm:tannerlinsley": {
+          kind: "maintainer",
+          name: "tannerlinsley",
+          packages: [
+            { pid: "npm:@tanstack/react-query", name: "@tanstack/react-query", ecosystem: "npm" },
+            { pid: "npm:@tanstack/store", name: "@tanstack/store", ecosystem: "npm" }
+          ],
+          registries: ["npm"],
+          packages_at_risk: 12,
+          action: "revoke",
+          path: ["npm:@tanstack/react-query", "npm:tannerlinsley", "npm:@tanstack/store"]
+        }
+      };
+      var hit = known[id];
+      if (!hit) {
+        return envelope("// catalog join plus leverage neighborhood, not a new traversal", {
+          found: false,
+          id: id,
+          packages: []
+        }, 9);
+      }
+      var extras = expandedPackages[id] || [];
+      return envelope("// catalog join plus leverage neighborhood, not a new traversal", Object.assign({
+        found: true,
+        id: id
+      }, hit, {
+        packages: hit.packages.concat(extras)
+      }), 12);
+    }
+
+    if (p === "/api/expand") {
+      var expandId = b.id || "";
+      if (expandId !== "npm:tannerlinsley") {
+        return envelope("// catalog merge from maintainer search, not a traversal", {
+          found: false,
+          id: expandId,
+          added: 0,
+          packages: []
+        }, 8);
+      }
+      var extra = {
+        pid: "npm:@tanstack/query-core",
+        name: "@tanstack/query-core",
+        ecosystem: "npm"
+      };
+      var current = expandedPackages[expandId] || [];
+      var added = 0;
+      if (!current.some(function (row) { return row.pid === extra.pid; })) {
+        current = current.concat([extra]);
+        expandedPackages[expandId] = current;
+        added = 1;
+      }
+      return envelope("// catalog merge from maintainer search, not a traversal", {
+        found: true,
+        id: expandId,
+        added: added,
+        packages: [
+          { pid: "npm:@tanstack/react-query", name: "@tanstack/react-query", ecosystem: "npm" },
+          { pid: "npm:@tanstack/store", name: "@tanstack/store", ecosystem: "npm" }
+        ].concat(current)
+      }, 18);
     }
 
     if (p === "/api/timeline") {

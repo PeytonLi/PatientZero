@@ -117,6 +117,20 @@
   <!-- ============ RIGHT: the four products ============ -->
   <div class="rail">
 
+    <section class="panel" aria-labelledby="id-h" id="p-identity">
+      <div class="panel-head">
+        <h2 id="id-h">Identity <span class="sub">if this credential is stolen</span></h2>
+        <div class="panel-head-right">
+          <button type="button" class="expand-btn" id="identity-expand" disabled>Expand</button>
+          <span class="chip" id="identity-kind">—</span>
+        </div>
+      </div>
+      <div class="panel-body" id="identity-body">
+        <p class="empty-line">Pick a maintainer or workflow from leverage or index case.</p>
+      </div>
+      <details class="q"><summary><span class="q-icon">⌗</span> Show query<span class="q-lat" id="identity-lat"></span></summary><pre id="identity-cypher"></pre></details>
+    </section>
+
     <section class="panel" aria-labelledby="radius-h" id="p-radius">
       <div class="panel-head">
         <h2 id="radius-h">Blast radius <span class="topo topo-dep">DEPENDENCY topology · backward · bitemporal</span></h2>
@@ -133,6 +147,10 @@
           <div class="seg" role="group" aria-label="Forecast topology">
             <button class="seg-btn is-on" data-topology="trust">TRUST</button>
             <button class="seg-btn" data-topology="dependency">DEPENDENCY <span class="seg-note">control</span></button>
+          </div>
+          <div class="seg" role="group" aria-label="Forecast rank">
+            <button class="rank-btn is-on" data-rank="rarity">RARE</button>
+            <button class="rank-btn" data-rank="popularity">POPULAR</button>
           </div>
           <span class="chip" id="forecast-count">—</span>
         </div>

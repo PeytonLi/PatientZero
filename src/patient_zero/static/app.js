@@ -23,6 +23,7 @@
   var windowStart = PZ.WORM_START;
   var windowEnd = PZ.T_END;
   var topology = "trust";
+  var rank = "rarity";
   var bannerLocked = false;
   var seenNodes = {};
   var debounceTimer = 0;
@@ -213,6 +214,101 @@
       wrap.appendChild(node);
     });
     return wrap;
+  }
+
+  function openIdentity(id) {
+    if (!id) return;
+    PZ.fetchApi("/api/identity?id=" + encodeURIComponent(id)).then(function (payload) {
+      noteStub([payload]);
+      renderIdentity(payload);
+    }).catch(function (err) {
+      console.error("identity failed", err);
+    });
+  }
+
+  function expandIdentity() {
+    var btn = $("identity-expand");
+    var id = btn && btn.getAttribute("data-id");
+    if (!id) return;
+    btn.disabled = true;
+    PZ.fetchApi("/api/expand", { method: "POST", body: { id: id } }).then(function (expanded) {
+      noteStub([expanded]);
+      return PZ.fetchApi("/api/identity?id=" + encodeURIComponent(id)).then(function (payload) {
+        payload.added = expanded.added;
+        noteStub([payload]);
+        renderIdentity(payload);
+      });
+    }).catch(function (err) {
+      console.error("expand failed", err);
+      if (btn) btn.disabled = false;
+    });
+  }
+
+  function setExpandControl(payload) {
+    var btn = $("identity-expand");
+    if (!btn) return;
+    if (!payload || !payload.found || !payload.id) {
+      btn.disabled = true;
+      btn.removeAttribute("data-id");
+      return;
+    }
+    btn.disabled = false;
+    btn.setAttribute("data-id", payload.id);
+  }
+
+  function renderIdentity(payload) {
+    var body = $("identity-body");
+    var chip = $("identity-kind");
+    fillQuery("identity-cypher", "identity-lat", payload);
+    setExpandControl(payload);
+    if (!body) return;
+    empty(body);
+    if (!payload || !payload.found) {
+      if (chip) chip.textContent = "—";
+      body.appendChild(
+        el("p", "empty-line", "No credential with that id in this slice.")
+      );
+      return;
+    }
+    if (chip) chip.textContent = payload.kind || "—";
+    var sum = el("p", "triage-sum");
+    var bits = [prettyId(payload.id)];
+    if (payload.action) bits.push(payload.action);
+    if (typeof payload.packages_at_risk === "number") {
+      bits.push(payload.packages_at_risk + " at risk in the neighborhood");
+    }
+    sum.textContent = bits.join(" · ");
+    body.appendChild(sum);
+    if (typeof payload.added === "number") {
+      body.appendChild(
+        el("p", "empty-line", "Added " + payload.added + " to this slice.")
+      );
+    }
+    if (payload.registries && payload.registries.length > 1) {
+      body.appendChild(
+        el("p", "verdict-line", "Crosses " + payload.registries.join(" + "))
+      );
+    }
+    (payload.aliases || []).forEach(function (alias) {
+      var row = el("article", "hit");
+      row.setAttribute("role", "button");
+      row.tabIndex = 0;
+      row.appendChild(el("span", "kind-tag kind-" + (alias.kind || ""), alias.kind || "alias"));
+      row.appendChild(el("strong", "hit-name", prettyId(alias.id)));
+      row.appendChild(el("span", "hit-time", alias.ecosystem || ""));
+      row.addEventListener("click", function () {
+        openIdentity(alias.id);
+      });
+      body.appendChild(row);
+    });
+    (payload.packages || []).slice(0, 12).forEach(function (pkg) {
+      var row = el("article", "hit");
+      row.appendChild(el("strong", "hit-name", prettyId(pkg.pid || pkg)));
+      body.appendChild(row);
+    });
+    if (payload.path && payload.path.length) {
+      body.appendChild(pathRow(payload.path));
+    }
   }
 
   function isNullish(v) {
@@ -575,6 +671,11 @@
       head.appendChild(score);
       row.appendChild(head);
       row.appendChild(pathRow(c.path_to_observed || []));
+      row.setAttribute("role", "button");
+      row.tabIndex = 0;
+      row.addEventListener("click", function () {
+        openIdentity(c.id);
+      });
       body.appendChild(row);
     });
   }
@@ -713,6 +814,11 @@
       if (typeof n === "number") {
         item.appendChild(el("span", "lev-n", n + (typeof r.packages_at_risk === "number" ? " pkg" : " svc")));
       }
+      item.setAttribute("role", "button");
+      item.tabIndex = 0;
+      item.addEventListener("click", function () {
+        openIdentity(r.id);
+      });
       body.appendChild(item);
     });
     if (cut) {
@@ -826,7 +932,7 @@
 
     PZ.fetchApi("/api/forecast", {
       method: "POST",
-      body: { seeds: seeds, as_of: asOf, k: 8, topology: topology }
+      body: { seeds: seeds, as_of: asOf, k: 8, topology: topology, rank: rank }
     }).then(onPanel(function (forecast) {
       renderForecast(forecast);
       renderMap(asOf, forecast);
@@ -870,7 +976,7 @@
   }
 
   function bindForecastToggle() {
-    var btns = document.querySelectorAll(".seg-btn");
+    var btns = document.querySelectorAll(".seg-btn[data-topology]");
     btns.forEach(function (btn) {
       btn.addEventListener("click", function () {
         topology = btn.getAttribute("data-topology") || "trust";
@@ -879,6 +985,16 @@
         });
         document.body.classList.toggle("topo-trust", topology === "trust");
         document.body.classList.toggle("topo-dep", topology === "dependency");
+        refresh();
+      });
+    });
+    var ranks = document.querySelectorAll(".rank-btn[data-rank]");
+    ranks.forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        rank = btn.getAttribute("data-rank") || "rarity";
+        ranks.forEach(function (b) {
+          b.classList.toggle("is-on", b.getAttribute("data-rank") === rank);
+        });
         refresh();
       });
     });
@@ -930,6 +1046,8 @@
     bindForecastToggle();
     var playBtn = $("play-clock");
     if (playBtn) playBtn.addEventListener("click", togglePlay);
+    var expandBtn = $("identity-expand");
+    if (expandBtn) expandBtn.addEventListener("click", expandIdentity);
 
     var scrub = $("scrub");
     scrub.addEventListener("input", onScrubInput);
